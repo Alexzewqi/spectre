@@ -1,5 +1,6 @@
 package net.spectre.client.module.impl.render;
 
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -7,6 +8,7 @@ import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import java.util.ArrayDeque;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.StringJoiner;
@@ -21,6 +23,13 @@ import net.minecraft.network.protocol.game.ClientboundBlockEventPacket;
 import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
 import net.minecraft.util.ARGB;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.decoration.ArmorStand;
+import net.minecraft.world.entity.decoration.ItemFrame;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.vehicle.minecart.AbstractMinecartContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
@@ -66,6 +75,7 @@ public final class EchoFinderModule extends ClientModule {
    private static final long REPEAT_GAP_MS = 2000L;
    private static final int MAX_POINTS = 512;
    private static final long POINT_LIFE_MS = 45000L;
+   private static final int ENTITY_SCAN_TICKS = 50;
    private final NumberSetting needed = this.addSetting("evidence-needed", new NumberSetting("Evidence needed", 8.0F, 2.0F, 40.0F).step(1.0F));
    private final NumberSetting memory = this.addSetting("memory", new NumberSetting("Evidence half-life (min)", 10.0F, 1.0F, 60.0F).step(1.0F));
    private final BooleanSetting keepFlagged = this.addSetting("keep-flagged", new BooleanSetting("Keep flagged chunks", true));
@@ -73,6 +83,7 @@ public final class EchoFinderModule extends ClientModule {
    private final BooleanSetting undergroundOnly = this.addSetting("underground-only", new BooleanSetting("Underground only", false));
    private final NumberSetting undergroundY = this.addSetting("underground-y", new NumberSetting("Underground below Y", 50.0F, -64.0F, 128.0F).step(1.0F));
    private final EnumMap<Signal, BooleanSetting> sources = new EnumMap<>(Signal.class);
+   private final NumberSetting packSize = this.addSetting("pack-size", new NumberSetting("Mob pack size", 6.0F, 3.0F, 30.0F).step(1.0F));
    private final BooleanSetting showPoints = this.addSetting("show-points", new BooleanSetting("Show activity points", true));
    private final ColorSetting pointColor = this.addSetting("point-color", new ColorSetting("Point color", 0xFFFFE066));
    private final ColorSetting chunkColor = this.addSetting("chunk-color", new ColorSetting("Chunk color", 0x6034D5FF));
@@ -84,11 +95,14 @@ public final class EchoFinderModule extends ClientModule {
    private final LongOpenHashSet flagged = new LongOpenHashSet();
    private final ArrayDeque<Point> points = new ArrayDeque<>();
    private final ChunkAreas chunkAreas = new ChunkAreas();
+   private final IntOpenHashSet countedEntities = new IntOpenHashSet();
+   private final Map<PackKey, PackTally> packs = new HashMap<>();
+   private int entityScanAge;
    private ClientLevel lastLevel;
    private long lastDecayMs;
 
    public EchoFinderModule() {
-      super("echo-finder", "Echo Finder", "Flags chunks where the server reports live activity you cannot see: chest lids, pistons, spawners, mining and block sounds. Evidence adds up per chunk and fades over time. Short range; a hint, not proof of a base.", ModuleCategory.BASE_RAID);
+      super("echo-finder", "Echo Finder", "Flags chunks where the server reports live activity you cannot see: chest lids, pistons, spawners, mining, block sounds, mob packs, placed entities and other players. Evidence adds up per chunk and fades over time. Works without the blocks being loaded; a hint, not proof of a base.", ModuleCategory.BASE_RAID);
       this.usesNotifications();
       this.undergroundY.visibleWhen(this.undergroundOnly::get);
       this.pointColor.visibleWhen(this.showPoints::get);
@@ -118,6 +132,7 @@ public final class EchoFinderModule extends ClientModule {
       this.lastCounted.clear();
       this.flagged.clear();
       this.points.clear();
+      this.countedEntities.clear();
       this.lastDecayMs = System.currentTimeMillis();
    }
 
@@ -247,6 +262,11 @@ public final class EchoFinderModule extends ClientModule {
          this.lastLevel = mc.level;
       }
 
+      if (mc.level != null && mc.player != null && ++this.entityScanAge >= ENTITY_SCAN_TICKS) {
+         this.entityScanAge = 0;
+         this.scanEntities(mc);
+      }
+
       long now = System.currentTimeMillis();
       long elapsed = now - this.lastDecayMs;
       if (elapsed < 1000L) {
@@ -288,6 +308,46 @@ public final class EchoFinderModule extends ClientModule {
 
       if (this.lastCounted.size() > 4096) {
          this.lastCounted.clear();
+      }
+   }
+
+   /**
+    * Entities are tracked by the server separately from blocks, so they often still arrive where the
+    * blocks around them are hidden. Packs of one mob type in one chunk (a farm or grinder), placed
+    * entities and other players all count as evidence at the spot they stand.
+    */
+   private void scanEntities(Minecraft mc) {
+      this.packs.clear();
+      boolean wantPacks = this.sources.get(Signal.MOB_PACKS).get();
+
+      for (Entity entity : mc.level.entitiesForRendering()) {
+         if (entity == mc.player || !entity.isAlive()) {
+            continue;
+         }
+
+         if (entity instanceof ArmorStand || entity instanceof ItemFrame || entity instanceof AbstractMinecartContainer) {
+            // Placed things do not move; count each one once.
+            if (this.countedEntities.add(entity.getId())) {
+               this.record(mc, Signal.PLACED, entity.position(), Signal.PLACED.weight);
+            }
+         } else if (entity instanceof Player) {
+            this.record(mc, Signal.PLAYERS, entity.position(), Signal.PLAYERS.weight);
+         } else if (wantPacks && entity instanceof Mob) {
+            long chunk = ChunkPos.pack(entity.getBlockX() >> 4, entity.getBlockZ() >> 4);
+            this.packs.computeIfAbsent(new PackKey(chunk, entity.getType()), k -> new PackTally()).add(entity.position());
+         }
+      }
+
+      int pack = this.packSize.getInt();
+
+      for (PackTally tally : this.packs.values()) {
+         if (tally.count >= pack) {
+            this.record(mc, Signal.MOB_PACKS, new Vec3(tally.x / tally.count, tally.y / tally.count, tally.z / tally.count), Signal.MOB_PACKS.weight);
+         }
+      }
+
+      if (this.countedEntities.size() > 8192) {
+         this.countedEntities.clear();
       }
    }
 
@@ -340,7 +400,10 @@ public final class EchoFinderModule extends ClientModule {
       SPAWNERS("spawners", "Spawners firing", 3),
       MACHINES("machines", "Pistons and machines", 2),
       MINING("mining", "Other players mining", 3),
-      SOUNDS("sounds", "Block and player sounds", 2);
+      SOUNDS("sounds", "Block and player sounds", 2),
+      MOB_PACKS("mob-packs", "Mob packs (farms)", 3),
+      PLACED("placed", "Frames, stands, storage carts", 3),
+      PLAYERS("players", "Other players", 2);
 
       final String id;
       final String label;
@@ -378,6 +441,23 @@ public final class EchoFinderModule extends ClientModule {
          }
 
          return joiner.toString();
+      }
+   }
+
+   private record PackKey(long chunk, EntityType<?> type) {
+   }
+
+   private static final class PackTally {
+      int count;
+      double x;
+      double y;
+      double z;
+
+      void add(Vec3 pos) {
+         this.count++;
+         this.x += pos.x;
+         this.y += pos.y;
+         this.z += pos.z;
       }
    }
 

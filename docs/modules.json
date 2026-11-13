@@ -3231,7 +3231,7 @@
     {
       "id": "echo-finder",
       "name": "Echo Finder",
-      "description": "Flags chunks where the server reports live activity you cannot see: chest lids, pistons, spawners, mining and block sounds. Evidence adds up per chunk and fades over time. Short range; a hint, not proof of a base.",
+      "description": "Flags chunks where the server reports live activity you cannot see: chest lids, pistons, spawners, mining, block sounds, mob packs, placed entities and other players. Evidence adds up per chunk and fades over time. Works without the blocks being loaded; a hint, not proof of a base.",
       "category": "Base Raid",
       "action": false,
       "hold": false,
@@ -3270,6 +3270,12 @@
           "type": "Number",
           "default": "50.0",
           "range": "-64.0 to 128.0"
+        },
+        {
+          "label": "Mob pack size",
+          "type": "Number",
+          "default": "6.0",
+          "range": "3.0 to 30.0"
         },
         {
           "label": "Show activity points",
