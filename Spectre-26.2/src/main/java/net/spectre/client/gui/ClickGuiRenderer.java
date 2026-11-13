@@ -213,7 +213,6 @@ public final class ClickGuiRenderer {
    private float sideW;
    private float contentX, contentY, contentW, contentH;
    private static String clientVersion;
-   private static final java.time.format.DateTimeFormatter CLOCK = java.time.format.DateTimeFormatter.ofPattern("HH:mm");
 
    /** Near-black mixed toward the accent; t=0 is the darkest base, higher is lighter and more saturated. */
    private static int tone(float t, float alpha) {
@@ -353,11 +352,11 @@ public final class ClickGuiRenderer {
    private void layoutFrame(float open) {
       float sw = ImGui.getIO().getDisplaySizeX(), sh = ImGui.getIO().getDisplaySizeY();
       float grow = 0.9F + 0.1F * openPop;
-      workspaceW = Math.min(sw - 32F, SpectreWidgets.s(1080F)) * grow;
-      workspaceH = Math.min(sh - 32F, SpectreWidgets.s(640F)) * grow;
+      workspaceW = Math.min(sw - 32F, SpectreWidgets.s(1160F)) * grow;
+      workspaceH = Math.min(sh - 32F, SpectreWidgets.s(680F)) * grow;
       workspaceX = (sw - workspaceW) / 2;
       workspaceY = (sh - workspaceH) / 2 + SpectreWidgets.s(18F) * (1 - open);
-      sideW = SpectreWidgets.s(workspaceW >= SpectreWidgets.s(820F) ? 172F : 64F);
+      sideW = SpectreWidgets.s(workspaceW >= SpectreWidgets.s(820F) ? 176F : 64F);
       float gap = SpectreWidgets.s(10F);
       contentX = workspaceX + gap + sideW + gap;
       contentW = workspaceX + workspaceW - gap - contentX;
@@ -411,7 +410,7 @@ public final class ClickGuiRenderer {
       }
    }
 
-   /** Icon-only navigation rail: logo, categories, general pages, and the player's head. */
+   /** Navigation: the logo, every module category as its own row, then the client pages, all labelled. */
    private void renderSidebar(float open, float dt) {
       float gap = SpectreWidgets.s(10F);
       float x = workspaceX + gap, y = workspaceY + gap, w = sideW, h = workspaceH - gap * 2;
@@ -423,102 +422,53 @@ public final class ClickGuiRenderer {
       ImDrawList dl = ImGui.getWindowDrawList();
       pane(dl, x, y, w, h, SpectreWidgets.s(12F), 0.15F, 1);
 
-      boolean wide = w > SpectreWidgets.s(100F);
-      float cx = wide ? x + SpectreWidgets.s(30F) : x + w * 0.5F, lr = SpectreWidgets.s(wide ? 10F : 12F), ly = y + SpectreWidgets.s(30F);
-      if (wide) {
-         ImFont titleFont = ImGuiManager.getInstance().categoryFont();
-         SpectreWidgets.text(dl, titleFont, cx + lr + SpectreWidgets.s(12F), ly - SpectreWidgets.lineHeight(titleFont) * 0.5F - SpectreWidgets.s(6F), brightText(1), "Spectre");
-         ImFont tiny = ImGuiManager.getInstance().smallFont();
-         SpectreWidgets.text(dl, tiny, cx + lr + SpectreWidgets.s(12F), ly + SpectreWidgets.s(2F), SpectreWidgets.withAlpha(accentAt(0.5F), 0.9F), clientVersion().isEmpty() ? "client" : clientVersion());
-      }
+      navWide = w > SpectreWidgets.s(100F);
+      float lr = SpectreWidgets.s(9F), cx = navWide ? x + SpectreWidgets.s(26F) : x + w * 0.5F, ly = y + SpectreWidgets.s(28F);
       if (spooky) {
          HalloweenDecor.pumpkin(dl, cx, ly + SpectreWidgets.s(1F), lr, 1);
       } else {
-         for (int i = 4; i >= 1; i--) {
-            dl.addCircleFilled(cx, ly, lr + SpectreWidgets.s(4F) * i, SpectreWidgets.c(SpectreWidgets.withAlpha(GuiPalette.accent(), 0.035F)), 32);
-         }
          dl.pathClear();
          dl.pathArcTo(cx, ly, lr, (float) (Math.PI * 0.28), (float) (Math.PI * 1.72), 32);
-         dl.pathStroke(SpectreWidgets.c(GuiPalette.accent()), 0, SpectreWidgets.s(5F));
+         dl.pathStroke(SpectreWidgets.c(GuiPalette.accent()), 0, SpectreWidgets.s(4.5F));
+      }
+      if (navWide) {
+         ImFont titleFont = ImGuiManager.getInstance().categoryFont();
+         SpectreWidgets.text(dl, titleFont, cx + lr + SpectreWidgets.s(12F), ly - SpectreWidgets.lineHeight(titleFont) * 0.5F, brightText(1), "Spectre");
       }
       if (ImGui.isMouseHoveringRect(cx - lr, ly - lr, cx + lr, ly + lr)) showTooltip("Spectre " + clientVersion());
-      railDivider(dl, x, y + SpectreWidgets.s(58F), w);
+      railDivider(dl, x, y + SpectreWidgets.s(54F), w);
 
-      float avatar = SpectreWidgets.s(34F), footer = avatar + SpectreWidgets.s(26F);
-      float navTop = SpectreWidgets.s(66F);
+      float navTop = SpectreWidgets.s(62F);
       ImGui.setCursorPos(0, navTop);
-      if (ImGui.beginChild("##corz_nav", w, Math.max(1, h - navTop - footer), false, 24)) {
+      if (ImGui.beginChild("##corz_nav", w, Math.max(1, h - navTop - SpectreWidgets.s(8F)), false, 24)) {
          boolean searching = !normalizeSearch(globalSearch.get()).isEmpty();
-         ImDrawList navDl = ImGui.getWindowDrawList();
-         navDl.channelsSplit(2);
-         navDl.channelsSetCurrent(1);
-         railChosenLocalY = Float.NaN;
-         if (w > SpectreWidgets.s(100F)) {
-            ImGui.setCursorPos(SpectreWidgets.s(16F), ImGui.getCursorPosY() + SpectreWidgets.s(2F));
-            boolean pushed = pushFont(ImGuiManager.getInstance().smallFont());
-            ImGui.textDisabled("MODULES");
-            if (pushed) ImGui.popFont();
-            ImGui.setCursorPosY(ImGui.getCursorPosY() + SpectreWidgets.s(2F));
-         }
-         // Categories are folded into a few groups; a group with several categories shows them as tabs above the grid.
-         for (NavGroup group : NAV_GROUPS) {
-            List<ModuleCategory> cats = groupCategories(group);
-            if (cats.isEmpty()) continue;
-            boolean chosen = tab == Tab.MODULES && !searching && cats.contains(workspaceCategory);
-            long on = cats.stream().mapToLong(c -> modulesFor(c).stream().filter(ClientModule::isEnabled).count()).sum();
-            String tip = group.label() + (on > 0 ? "  ·  " + on + " on" : "");
-            if (railButton("##nav_" + group.label(), tip, chosen, on > 0, w)) {
+         navHeading("MODULES");
+         for (ModuleCategory category : navCategories()) {
+            boolean chosen = tab == Tab.MODULES && !searching && category == workspaceCategory;
+            long on = modulesFor(category).stream().filter(ClientModule::isEnabled).count();
+            String label = category.displayName();
+            if (navRow("##nav_" + category.name(), label, chosen, on > 0 ? Long.toString(on) : null, w)) {
                switchTab(Tab.MODULES);
-               if (!cats.contains(workspaceCategory)) workspaceCategory = cats.getFirst();
+               workspaceCategory = category;
                selectedModule = null;
+               detailOpen = false;
                globalSearch.set("");
                scroll.remove("corz_grid");
             }
-            drawCategoryIcon(ImGui.getWindowDrawList(), group.icon(), railIconX(), railIconY(), SpectreWidgets.s(7.5F), chosen ? GuiPalette.accent() : 0xFFB4ABB6);
-            railLabel(group.label(), chosen, on > 0 ? Long.toString(on) : null);
+            drawCategoryIcon(ImGui.getWindowDrawList(), category, navIconX(), navIconY(), SpectreWidgets.s(7F), chosen ? GuiPalette.accent() : 0xFFB4ABB6);
          }
-         navDl.channelsSetCurrent(0);
-         drawNavPill(navDl, dt);
-         navDl.channelsMerge();
-         railDivider(ImGui.getWindowDrawList(), ImGui.getWindowPosX(), ImGui.getWindowPosY() - ImGui.getScrollY() + ImGui.getCursorPosY() + SpectreWidgets.s(4F), w);
-         ImGui.setCursorPosY(ImGui.getCursorPosY() + SpectreWidgets.s(12F));
-         generalStrip(w);
+         ImGui.setCursorPosY(ImGui.getCursorPosY() + SpectreWidgets.s(6F));
+         railDivider(ImGui.getWindowDrawList(), ImGui.getWindowPosX(), ImGui.getWindowPosY() - ImGui.getScrollY() + ImGui.getCursorPosY(), w);
+         ImGui.setCursorPosY(ImGui.getCursorPosY() + SpectreWidgets.s(8F));
+         navHeading("CLIENT");
+         pageRow(Tab.HUD, w);
+         pageRow(Tab.THEME, w);
+         pageRow(Tab.CONFIG, w);
+         pageRow(Tab.FRIENDS, w);
          ImGui.dummy(1, SpectreWidgets.s(6F));
          applySmoothScroll("corz_nav", dt);
       }
       ImGui.endChild();
-
-      // Player head with an online dot; hover for the name and active module count.
-      float ax = cx - avatar * 0.5F, ay = y + h - footer + SpectreWidgets.s(8F);
-      if (wide) {
-         // Profile card around the head and name.
-         float px = x + SpectreWidgets.s(8F), py = ay - SpectreWidgets.s(7F), pw = w - SpectreWidgets.s(16F), ph = avatar + SpectreWidgets.s(14F);
-         dl.addRectFilled(px, py, px + pw, py + ph, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.04F)), SpectreWidgets.s(10F));
-         dl.addRect(px, py, px + pw, py + ph, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.08F)), SpectreWidgets.s(10F), 0, 1F);
-      } else {
-         railDivider(dl, x, ay - SpectreWidgets.s(9F), w);
-      }
-      String name = playerName();
-      if (!net.spectre.client.gui.mainmenu.PlayerFaces.drawSelf(dl, ax, ay, avatar, SpectreWidgets.s(7F), SpectreWidgets.c(-1))) {
-         int color = AVATAR_COLORS[Math.floorMod(name.hashCode(), AVATAR_COLORS.length)];
-         dl.addRectFilled(ax, ay, ax + avatar, ay + avatar, SpectreWidgets.c(color), SpectreWidgets.s(7F));
-         String initial = name.isEmpty() ? "?" : name.substring(0, 1).toUpperCase(Locale.ROOT);
-         SpectreWidgets.text(dl, ImGui.getFont(), ax + (avatar - ImGui.calcTextSize(initial).x) * 0.5F, ay + (avatar - ImGui.getTextLineHeight()) * 0.5F, -1, initial);
-      }
-      float dot = SpectreWidgets.s(4.5F);
-      dl.addCircleFilled(ax + avatar - dot * 0.4F, ay + avatar - dot * 0.4F, dot + SpectreWidgets.s(1.5F), tone(0.15F, 1), 16);
-      dl.addCircleFilled(ax + avatar - dot * 0.4F, ay + avatar - dot * 0.4F, dot, SpectreWidgets.c(0xFF5EDB4A), 16);
-      if (wide) {
-         float nx = ax + avatar + SpectreWidgets.s(10F);
-         ImFont small = ImGuiManager.getInstance().smallFont();
-         long active = ModuleRegistry.all().stream().filter(ClientModule::isEnabled).count();
-         SpectreWidgets.text(dl, ImGui.getFont(), nx, ay + SpectreWidgets.s(1F), brightText(1), SpectreWidgets.ellipsize(ImGui.getFont(), name, x + w - nx - SpectreWidgets.s(10F)));
-         SpectreWidgets.text(dl, small, nx, ay + avatar - SpectreWidgets.lineHeight(small) - SpectreWidgets.s(1F), mutedText(1), active + " modules on");
-      }
-      if (ImGui.isMouseHoveringRect(ax, ay, ax + avatar, ay + avatar)) {
-         long active = ModuleRegistry.all().stream().filter(ClientModule::isEnabled).count();
-         showTooltip(name + "\n" + active + " modules active");
-      }
       ImGui.end();
       ImGui.popStyleVar(2);
    }
@@ -527,26 +477,34 @@ public final class ClickGuiRenderer {
       dl.addLine(x + SpectreWidgets.s(14F), y, x + w - SpectreWidgets.s(14F), y, tone(0.30F, 1), 1);
    }
 
-   private float railIconX() {
-      return railWide ? ImGui.getItemRectMinX() + SpectreWidgets.s(18F) : (ImGui.getItemRectMinX() + ImGui.getItemRectMaxX()) * 0.5F;
+   /** Whether the sidebar is wide enough for labels; narrow sidebars show icons with tooltips. */
+   private boolean navWide;
+
+   private float navIconX() {
+      return navWide ? ImGui.getItemRectMinX() + SpectreWidgets.s(18F) : (ImGui.getItemRectMinX() + ImGui.getItemRectMaxX()) * 0.5F;
    }
 
-   private float railIconY() {
+   private float navIconY() {
       return (ImGui.getItemRectMinY() + ImGui.getItemRectMaxY()) * 0.5F;
    }
 
-   /** Whether the last rail slot was a full-width labelled row (wide sidebar) or an icon square. */
-   private boolean railWide;
-   private boolean railLastChosen;
-   private float railLastHover;
+   /** Small caption above a group of sidebar rows; skipped on the icon-only sidebar. */
+   private void navHeading(String text) {
+      if (!navWide) return;
+      ImGui.setCursorPos(SpectreWidgets.s(18F), ImGui.getCursorPosY() + SpectreWidgets.s(2F));
+      boolean pushed = pushFont(ImGuiManager.getInstance().smallFont());
+      ImGui.textDisabled(text);
+      if (pushed) ImGui.popFont();
+      ImGui.setCursorPosY(ImGui.getCursorPosY() + SpectreWidgets.s(3F));
+   }
 
    /**
-    * One navigation slot; draws hover/selected backing and the accent bar. Wide sidebars get full-width
-    * rows (the caller draws the icon, then {@link #railLabel} the text); narrow ones an icon square.
+    * One sidebar row. The selected row gets a flat accent fill and a bar on its left edge; the caller
+    * draws the icon at {@link #navIconX()}, {@link #navIconY()} afterwards. {@code badge} is a short
+    * count shown at the right edge, or null.
     */
-   private boolean railButton(String id, String tooltip, boolean chosen, boolean activeDot, float w) {
-      railWide = w > SpectreWidgets.s(100F);
-      float bw = railWide ? w - SpectreWidgets.s(16F) : SpectreWidgets.s(32F), bh = SpectreWidgets.s(railWide ? 30F : 32F);
+   private boolean navRow(String id, String label, boolean chosen, String badge, float w) {
+      float bw = navWide ? w - SpectreWidgets.s(16F) : SpectreWidgets.s(34F), bh = SpectreWidgets.s(navWide ? 30F : 34F);
       float localY = ImGui.getCursorPosY();
       ImGui.setCursorPos((w - bw) * 0.5F, localY);
       boolean clicked = ImGui.invisibleButton(id, bw, bh);
@@ -554,83 +512,50 @@ public final class ClickGuiRenderer {
       if (clicked && !chosen) GuiSounds.click();
       if (hovered) GuiSounds.hover(ImGui.getItemID());
       float glow = SpectreWidgets.animate(ImGui.getItemID(), chosen || hovered, 18F);
-      float bx = ImGui.getItemRectMinX(), by = ImGui.getItemRectMinY();
+      float x0 = ImGui.getItemRectMinX(), y0 = ImGui.getItemRectMinY(), x1 = x0 + bw, y1 = y0 + bh;
       ImDrawList dl = ImGui.getWindowDrawList();
-      float rr = SpectreWidgets.s(8F);
+      float rr = SpectreWidgets.s(7F);
       if (chosen) {
-         // The selected pill is drawn once per frame by drawNavPill, sliding between rows.
-         railChosenLocalY = by - ImGui.getWindowPosY() + ImGui.getScrollY();
-         railChosenX = bx;
-         railChosenW = bw;
-         railChosenH = bh;
+         dl.addRectFilled(x0, y0, x1, y1, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.16F)), rr);
+         dl.addRectFilled(x0, y0 + SpectreWidgets.s(7F), x0 + SpectreWidgets.s(3F), y1 - SpectreWidgets.s(7F), SpectreWidgets.c(accentAt(0F)), SpectreWidgets.s(2F));
       } else if (glow > 0.01F) {
-         dl.addRectFilled(bx, by, bx + bw, by + bh, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.05F * glow)), rr);
+         dl.addRectFilled(x0, y0, x1, y1, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.05F * glow)), rr);
       }
-      if (activeDot && !railWide) {
-         float r = SpectreWidgets.s(3F);
-         dl.addCircleFilled(bx + bw - SpectreWidgets.s(8F), by + SpectreWidgets.s(8F), r, SpectreWidgets.c(GuiPalette.accent()), 12);
+      if (navWide) {
+         ImFont font = ImGui.getFont(), small = ImGuiManager.getInstance().smallFont();
+         float badgeW = 0;
+         if (badge != null) {
+            badgeW = SpectreWidgets.textWidth(small, badge) + SpectreWidgets.s(10F);
+            SpectreWidgets.text(dl, small, x1 - badgeW, (y0 + y1 - SpectreWidgets.lineHeight(small)) * 0.5F, accentAt(0F), badge);
+         }
+         String text = SpectreWidgets.ellipsize(font, label, bw - SpectreWidgets.s(44F) - badgeW);
+         SpectreWidgets.text(dl, font, x0 + SpectreWidgets.s(34F), (y0 + y1 - ImGui.getTextLineHeight()) * 0.5F,
+            chosen ? brightText(1) : SpectreTheme.lerpColor(mutedText(1), brightText(1), glow * 0.7F), text);
+      } else {
+         if (badge != null) dl.addCircleFilled(x1 - SpectreWidgets.s(7F), y0 + SpectreWidgets.s(7F), SpectreWidgets.s(2.5F), SpectreWidgets.c(accentAt(0F)), 12);
+         if (hovered) showTooltip(badge == null ? label : label + "  ·  " + badge + " on");
       }
-      if (hovered && !railWide) showTooltip(tooltip);
-      railLastChosen = chosen;
-      railLastHover = glow;
       ImGui.setCursorPosY(localY + bh + SpectreWidgets.s(2F));
       return clicked;
    }
 
-   private float railChosenLocalY = Float.NaN, railChosenX, railChosenW, railChosenH;
-   private float navPillY = Float.NaN, navPillShow;
-
-   /** Selected-row pill that glides to the chosen sidebar row; drawn on the channel beneath the rows. */
-   private void drawNavPill(ImDrawList dl, float dt) {
-      boolean has = !Float.isNaN(railChosenLocalY);
-      navPillShow += ((has ? 1F : 0F) - navPillShow) * Math.min(1F, dt * 14F);
-      if (has) navPillY = Float.isNaN(navPillY) || navPillShow < 0.05F ? railChosenLocalY : navPillY + (railChosenLocalY - navPillY) * Math.min(1F, dt * 16F);
-      if (Float.isNaN(navPillY) || navPillShow < 0.01F) return;
-      float by = ImGui.getWindowPosY() - ImGui.getScrollY() + navPillY, bx = railChosenX, bw = railChosenW, bh = railChosenH, rr = SpectreWidgets.s(8F);
-      // Soft accent bloom around the pill, then the gradient body, a top sheen and a hairline rim.
-      for (int i = 1; i <= 3; i++) {
-         float e = SpectreWidgets.s(2.5F) * i;
-         dl.addRectFilled(bx - e, by - e, bx + bw + e, by + bh + e, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.05F * navPillShow / i)), rr + e);
-      }
-      int a = SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.30F * navPillShow)), b = SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(1F), 0.10F * navPillShow));
-      HudChrome.gradient(dl, bx, by, bw, bh, rr, a, b, 1F);
-      HudChrome.gradientVertical(dl, bx, by, bw, bh * 0.5F, rr,
-         SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.07F * navPillShow)), SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0F)));
-      dl.addRect(bx, by, bx + bw, by + bh, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.35F * navPillShow)), rr, 0, 1F);
-      float barX = bx - SpectreWidgets.s(railWide ? 0F : 6F);
-      float barTop = by + SpectreWidgets.s(7F), barBottom = by + bh - SpectreWidgets.s(7F);
-      for (int i = 1; i <= 3; i++) {
-         float e = SpectreWidgets.s(1.5F) * i;
-         dl.addRectFilled(barX - e, barTop - e, barX + SpectreWidgets.s(3F) + e, barBottom + e, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.12F * navPillShow / i)), SpectreWidgets.s(2F) + e);
-      }
-      dl.addRectFilled(barX, barTop, barX + SpectreWidgets.s(3F), barBottom, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), navPillShow)), SpectreWidgets.s(2F));
+   private static String pageTitle(Tab page) {
+      return switch (page) {
+         case HUD -> "HUD Editor";
+         case THEME -> "Theme";
+         case CONFIG -> "Profiles";
+         case FRIENDS -> "Friends";
+         default -> "Modules";
+      };
    }
 
-   /** Label and optional count badge for the wide sidebar row just drawn by {@link #railButton}. */
-   private void railLabel(String label, boolean chosen, String badge) {
-      if (!railWide) return;
-      ImDrawList dl = ImGui.getWindowDrawList();
-      float x0 = ImGui.getItemRectMinX(), y0 = ImGui.getItemRectMinY(), x1 = ImGui.getItemRectMaxX(), y1 = ImGui.getItemRectMaxY();
-      ImFont font = ImGui.getFont();
-      float badgeW = 0;
-      if (badge != null) {
-         ImFont small = ImGuiManager.getInstance().smallFont();
-         badgeW = SpectreWidgets.textWidth(small, badge) + SpectreWidgets.s(12F);
-         float bh = SpectreWidgets.lineHeight(small) + SpectreWidgets.s(4F), bx = x1 - badgeW - SpectreWidgets.s(8F), by = (y0 + y1 - bh) * 0.5F;
-         dl.addRectFilled(bx, by, bx + badgeW, by + bh, SpectreWidgets.c(SpectreWidgets.withAlpha(GuiPalette.accent(), chosen ? 0.35F : 0.18F)), bh * 0.5F);
-         SpectreWidgets.text(dl, small, bx + SpectreWidgets.s(6F), by + SpectreWidgets.s(2F), brightText(chosen ? 1F : 0.85F), badge);
-      }
-      String text = SpectreWidgets.ellipsize(font, label, x1 - x0 - SpectreWidgets.s(44F) - badgeW);
-      SpectreWidgets.text(dl, font, x0 + SpectreWidgets.s(34F), (y0 + y1 - ImGui.getTextLineHeight()) * 0.5F,
-         chosen ? brightText(1) : SpectreTheme.lerpColor(mutedText(1), brightText(1), railLastHover * 0.6F), text);
-   }
-
-   private void generalRow(Tab target, String label, float w) {
+   /** Sidebar row for one of the client pages. */
+   private void pageRow(Tab target, float w) {
       boolean chosen = tab == target;
-      if (railButton("##nav_tab_" + target.name(), label, chosen, false, w)) switchTab(target);
+      if (navRow("##nav_tab_" + target.name(), pageTitle(target), chosen, null, w)) switchTab(target);
       ImDrawList dl = ImGui.getWindowDrawList();
-      float cx = railIconX(), cy = railIconY();
-      float r = SpectreWidgets.s(7.5F), th = SpectreWidgets.s(1.5F);
+      float cx = navIconX(), cy = navIconY();
+      float r = SpectreWidgets.s(7F), th = SpectreWidgets.s(1.5F);
       int raw = chosen ? GuiPalette.accent() : 0xFFB4ABB6;
       int color = SpectreWidgets.c(raw);
       switch (target) {
@@ -643,28 +568,9 @@ public final class ClickGuiRenderer {
          }
          default -> {}
       }
-      railLabel(label, chosen, null);
-   }
-   /**
-    * A small rounded status chip ending at {@code right}: a coloured dot and the text. Returns the chip's left
-    * edge minus a gap so chips stack leftward; skips drawing (and returns {@code right}) if it would collide
-    * with {@code minX}. {@code dotArgb} is ARGB.
-    */
-   private static float statusChip(ImDrawList dl, ImFont font, float right, float barY, float barH, String text, int dotArgb, float minX) {
-      float tw = SpectreWidgets.textWidth(font, text), dot = SpectreWidgets.s(3F);
-      float cw = tw + dot * 2 + SpectreWidgets.s(18F), ch = SpectreWidgets.lineHeight(font) + SpectreWidgets.s(8F);
-      float cx = right - cw, cy = barY + (barH - ch) * 0.5F;
-      if (cx < minX + SpectreWidgets.s(16F)) return right;
-      int dotC = GuiPalette.abgr(dotArgb);
-      dl.addRectFilled(cx, cy, cx + cw, cy + ch, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFF000000, 0.28F)), ch * 0.5F);
-      dl.addRect(cx, cy, cx + cw, cy + ch, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.08F)), ch * 0.5F, 0, 1F);
-      float dx = cx + SpectreWidgets.s(9F) + dot, dy = cy + ch * 0.5F;
-      dl.addCircleFilled(dx, dy, dot * 2.2F, SpectreWidgets.c(SpectreWidgets.withAlpha(dotC, 0.2F)), 16);
-      dl.addCircleFilled(dx, dy, dot, SpectreWidgets.c(dotC), 16);
-      SpectreWidgets.text(dl, font, dx + dot + SpectreWidgets.s(6F), cy + SpectreWidgets.s(4F), brightText(0.9F), text);
-      return cx - SpectreWidgets.s(6F);
    }
 
+   /** Header: what is on screen (category or page, with its counts) on the left, search on the right. */
    private void renderTopBar(float open) {
       float h = SpectreWidgets.s(40F), x = contentX, y = workspaceY + SpectreWidgets.s(10F), w = contentW;
       ImGui.setNextWindowPos(x, y, 1);
@@ -674,57 +580,55 @@ public final class ClickGuiRenderer {
       ImGui.begin("##corz_topbar", 8511 | 128);
       ImDrawList dl = ImGui.getWindowDrawList();
       pane(dl, x, y, w, h, SpectreWidgets.s(12F), 0.15F, 1);
-      // Accent underline that fades out toward both ends.
-      float lineY = y + h - SpectreWidgets.s(1F), mid = x + w * 0.5F;
-      int solidA = SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.7F)), clearA = SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0F));
-      int solidB = SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(1F), 0.7F)), clearB = SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(1F), 0F));
-      dl.addRectFilledMultiColor(x + SpectreWidgets.s(12F), lineY, mid, lineY + SpectreWidgets.s(1.5F), clearA, solidA, solidA, clearA);
-      dl.addRectFilledMultiColor(mid, lineY, x + w - SpectreWidgets.s(12F), lineY + SpectreWidgets.s(1.5F), solidB, clearB, clearB, solidB);
-      ImFont font = ImGui.getFont();
-      float textY = y + (h - ImGui.getTextLineHeight()) * 0.5F;
-      // Greeting on the left (muted "Hello," + bright name), the clock centred in the accent colour.
-      float tx = x + SpectreWidgets.s(16F);
-      String hello = spooky ? "Happy Halloween, " : "Hello, ";
-      SpectreWidgets.text(dl, font, tx, textY, mutedText(1), hello);
-      SpectreWidgets.text(dl, font, tx + SpectreWidgets.textWidth(font, hello), textY, brightText(1), playerName());
-      float greetEnd = tx + SpectreWidgets.textWidth(font, hello + playerName());
 
-      float searchW = Math.min(SpectreWidgets.s(240F), w * 0.36F), searchH = SpectreWidgets.s(28F);
+      float searchW = Math.min(SpectreWidgets.s(260F), w * 0.4F), searchH = SpectreWidgets.s(28F);
       float sx = x + w - searchW - SpectreWidgets.s(6F), sy = y + (h - searchH) * 0.5F;
-      ImFont small = ImGuiManager.getInstance().smallFont();
-      String clock = java.time.LocalTime.now().format(CLOCK);
-      float clockW = SpectreWidgets.textWidth(font, clock), clockX = x + (w - clockW) * 0.5F;
-      // Status chips left of the search box: FPS and ping, coloured by how healthy they are.
-      float chipsEnd = sx - SpectreWidgets.s(8F);
-      Minecraft mc = Minecraft.getInstance();
-      int ping = -1;
-      if (mc.getConnection() != null && mc.player != null) {
-         var info = mc.getConnection().getPlayerInfo(mc.player.getUUID());
-         if (info != null) ping = info.getLatency();
+      ImFont titleFont = ImGuiManager.getInstance().categoryFont(), small = ImGuiManager.getInstance().smallFont();
+      boolean searching = !normalizeSearch(globalSearch.get()).isEmpty();
+      String title, detail;
+      float tx = x + SpectreWidgets.s(16F);
+      if (tab != Tab.MODULES) {
+         title = pageTitle(tab);
+         detail = null;
+      } else if (searching) {
+         int found = searchModules(globalSearch.get()).size();
+         title = "Search";
+         detail = found == 1 ? "1 result" : found + " results";
+      } else if (workspaceCategory != null) {
+         List<ClientModule> shown = modulesFor(workspaceCategory);
+         long on = shown.stream().filter(ClientModule::isEnabled).count();
+         title = workspaceCategory.displayName();
+         detail = shown.isEmpty() ? null : shown.size() + " modules  ·  " + on + " on";
+         drawCategoryIcon(dl, workspaceCategory, tx + SpectreWidgets.s(7F), y + h * 0.5F, SpectreWidgets.s(7F), GuiPalette.accent());
+         tx += SpectreWidgets.s(24F);
+      } else {
+         title = "Modules";
+         detail = null;
       }
-      int fps = mc.getFps();
-      chipsEnd = statusChip(dl, small, chipsEnd, y, h, fps + " FPS", fps >= 60 ? 0xFF5EDB4A : fps >= 30 ? 0xFFFFC542 : 0xFFFF4D5A, greetEnd);
-      if (ping >= 0) chipsEnd = statusChip(dl, small, chipsEnd, y, h, ping + " ms", ping < 80 ? 0xFF5EDB4A : ping < 160 ? 0xFFFFC542 : 0xFFFF4D5A, greetEnd);
-      if (clockX > greetEnd + SpectreWidgets.s(12F) && clockX + clockW < chipsEnd - SpectreWidgets.s(12F)) {
-         SpectreWidgets.text(dl, font, clockX, textY, accentAt(0.5F), clock);
+      SpectreWidgets.text(dl, titleFont, tx, y + (h - SpectreWidgets.lineHeight(titleFont)) * 0.5F, brightText(1), title);
+      if (detail != null) {
+         float dx = tx + SpectreWidgets.textWidth(titleFont, title) + SpectreWidgets.s(12F);
+         if (dx + SpectreWidgets.textWidth(small, detail) < sx - SpectreWidgets.s(12F)) {
+            SpectreWidgets.text(dl, small, dx, y + (h - SpectreWidgets.lineHeight(small)) * 0.5F + SpectreWidgets.s(1F), mutedText(1), detail);
+         }
       }
+
       boolean searchFocus = ImGui.isMouseHoveringRect(sx, sy, sx + searchW, sy + searchH) || !globalSearch.get().isEmpty();
       float sf = SpectreWidgets.animate(ImGui.getID("##search_focus"), searchFocus, 14F);
-      dl.addRectFilled(sx, sy, sx + searchW, sy + searchH, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFF000000, 0.35F)), searchH * 0.5F);
-      dl.addRect(sx, sy, sx + searchW, sy + searchH, SpectreWidgets.c(SpectreTheme.lerpColor(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.10F), SpectreWidgets.withAlpha(accentAt(0F), 0.8F), sf)), searchH * 0.5F, 0, 1);
+      dl.addRectFilled(sx, sy, sx + searchW, sy + searchH, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFF000000, 0.35F)), SpectreWidgets.s(8F));
+      dl.addRect(sx, sy, sx + searchW, sy + searchH, SpectreWidgets.c(SpectreTheme.lerpColor(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.10F), SpectreWidgets.withAlpha(accentAt(0F), 0.8F), sf)), SpectreWidgets.s(8F), 0, 1);
       SpectreWidgets.magnifier(dl, sx + SpectreWidgets.s(15F), sy + searchH * 0.5F, SpectreWidgets.s(5.5F), 0xFFB4ABB6);
-      String hint = "^K";
-      float chipW = SpectreWidgets.textWidth(small, hint) + SpectreWidgets.s(12F), chipH = searchH - SpectreWidgets.s(10F);
-      float chipX = sx + searchW - chipW - SpectreWidgets.s(6F), chipY = sy + SpectreWidgets.s(5F);
-      dl.addRectFilled(chipX, chipY, chipX + chipW, chipY + chipH, tone(0.24F, 1), SpectreWidgets.s(5F));
-      SpectreWidgets.text(dl, small, chipX + SpectreWidgets.s(6F), chipY + (chipH - SpectreWidgets.lineHeight(small)) * 0.5F, mutedText(1), hint);
+      String hint = "Ctrl K";
+      float hintW = SpectreWidgets.textWidth(small, hint);
+      float hintX = sx + searchW - hintW - SpectreWidgets.s(10F);
+      if (globalSearch.get().isEmpty()) SpectreWidgets.text(dl, small, hintX, sy + (searchH - SpectreWidgets.lineHeight(small)) * 0.5F, mutedText(0.7F), hint);
 
       ImGui.setCursorScreenPos(sx + SpectreWidgets.s(26F), sy);
       ImGui.pushStyleColor(7, 0);
       ImGui.pushStyleColor(8, 0);
       ImGui.pushStyleColor(9, 0);
       ImGui.pushStyleVar(11, SpectreWidgets.s(4F), (searchH - ImGui.getTextLineHeight()) * 0.5F);
-      ImGui.setNextItemWidth(chipX - sx - SpectreWidgets.s(30F));
+      ImGui.setNextItemWidth(hintX - sx - SpectreWidgets.s(32F));
       if (focusSearch) { ImGui.setKeyboardFocusHere(); focusSearch = false; }
       if (ImGui.inputTextWithHint("##corz_search", "Search modules...", globalSearch)) {
          if (tab != Tab.MODULES) switchTab(Tab.MODULES);
@@ -740,6 +644,7 @@ public final class ClickGuiRenderer {
    private void renderModuleBoard(float dt, float alpha) {
       if (BuilderPanel.takeOpenRequest()) workspaceCategory = ModuleCategory.BASE_BUILDER;
       boolean searching = !normalizeSearch(globalSearch.get()).isEmpty();
+      if (workspaceCategory == null) workspaceCategory = navCategories().getFirst();
       if (!searching && workspaceCategory == ModuleCategory.BASE_BUILDER) {
          ImGui.setNextWindowPos(contentX, contentY, 1);
          ImGui.setNextWindowSize(contentW, contentH, 1);
@@ -753,7 +658,14 @@ public final class ClickGuiRenderer {
          return;
       }
 
-      List<ClientModule> modules = searching ? searchModules(globalSearch.get()) : modulesFor(workspaceCategory);
+      List<ClientModule> modules;
+      if (searching) {
+         modules = searchModules(globalSearch.get());
+      } else {
+         // Alphabetical, so a module is always in the same place whatever order it was registered in.
+         modules = new ArrayList<>(modulesFor(workspaceCategory));
+         modules.sort(Comparator.comparing(ClientModule::name, String.CASE_INSENSITIVE_ORDER));
+      }
       if (selectedModule != null && !modules.contains(selectedModule)) {
          selectedModule = null;
          detailOpen = false;
@@ -765,14 +677,7 @@ public final class ClickGuiRenderer {
       float panelFull = Math.max(SpectreWidgets.s(300F), contentW * 0.46F);
       float panelW = panelFull * easeOut(detail);
       float gridW = contentW - (detail > 0.01F ? panelW + gap * detail : 0);
-      // Groups with several categories get a row of tabs above the grid.
-      List<ModuleCategory> siblings = searching ? List.of() : groupCategories(groupOf(workspaceCategory));
-      float tabsH = 0;
-      if (siblings.size() > 1) {
-         tabsH = SpectreWidgets.s(34F);
-         renderCategoryTabs(siblings, contentX, gridW, tabsH, alpha);
-      }
-      renderModuleGrid(modules, contentX, contentY + tabsH, gridW, contentH - tabsH, alpha, dt);
+      renderModuleGrid(modules, contentX, contentY, gridW, contentH, alpha, dt);
       if (detail > 0.01F && detailShown != null) {
          if (detailShown != panelModule) {
             panelModule = detailShown;
@@ -788,8 +693,6 @@ public final class ClickGuiRenderer {
    private static final int DETAIL_KEY = "corz_detail".hashCode();
    private String gridKey;
    private long gridChangedAt;
-   private ClientModule clickedCard;
-   private long clickedAt;
    /** The module whose settings were last shown; a change fades the panel content in again. */
    private ClientModule panelModule;
    private long panelChangedAt;
@@ -798,55 +701,22 @@ public final class ClickGuiRenderer {
    /** The module whose panel is on screen (kept while it slides closed). */
    private ClientModule detailShown;
 
-   /** Two-column grid of module cards: name, info, keybind and switch. Clicking a card opens its settings. */
-   /** Pill tabs switching between the categories of the current sidebar group. */
-   private void renderCategoryTabs(List<ModuleCategory> categories, float x, float w, float h, float alpha) {
-      ImGui.setNextWindowPos(x, contentY, 1);
-      ImGui.setNextWindowSize(w, h, 1);
-      ImGui.pushStyleVar(0, Math.max(0.01F, alpha));
-      ImGui.pushStyleVar(2, 0F, 0F);
-      ImGui.begin("##corz_cat_tabs", 8511 | 128);
-      ImDrawList dl = ImGui.getWindowDrawList();
-      ImFont small = ImGuiManager.getInstance().smallFont();
-      float tx = 0, th = SpectreWidgets.s(26F), ty = SpectreWidgets.s(0F);
-      for (ModuleCategory category : categories) {
-         boolean chosen = category == workspaceCategory;
-         long on = modulesFor(category).stream().filter(ClientModule::isEnabled).count();
-         String label = category.displayName();
-         String count = Long.toString(modulesFor(category).size());
-         float tw = SpectreWidgets.s(30F) + SpectreWidgets.textWidth(ImGui.getFont(), label) + SpectreWidgets.textWidth(small, count) + SpectreWidgets.s(24F);
-         ImGui.setCursorPos(tx, ty);
-         if (ImGui.invisibleButton("##cat_" + category.name(), tw, th)) {
-            if (!chosen) GuiSounds.click();
-            workspaceCategory = category;
-            selectedModule = null;
-            scroll.remove("corz_grid");
-         }
-         boolean hovered = ImGui.isItemHovered();
-         float glow = SpectreWidgets.animate(ImGui.getItemID(), chosen || hovered, 18F);
-         float bx = ImGui.getItemRectMinX(), by = ImGui.getItemRectMinY();
-         if (chosen) {
-            HudChrome.gradient(dl, bx, by, tw, th, th * 0.5F, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.30F)), SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(1F), 0.18F)), 1F);
-            dl.addRect(bx, by, bx + tw, by + th, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.5F)), th * 0.5F, 0, 1F);
-         } else {
-            dl.addRectFilled(bx, by, bx + tw, by + th, tone(0.11F + 0.04F * glow, 0.92F), th * 0.5F);
-            dl.addRect(bx, by, bx + tw, by + th, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.06F + 0.06F * glow)), th * 0.5F, 0, 1F);
-         }
-         drawCategoryIcon(dl, category, bx + SpectreWidgets.s(15F), by + th * 0.5F, SpectreWidgets.s(6F), chosen ? 0xFFFFFFFF : 0xFFB4ABB6);
-         float lx = bx + SpectreWidgets.s(28F);
-         SpectreWidgets.text(dl, ImGui.getFont(), lx, by + (th - ImGui.getTextLineHeight()) * 0.5F, chosen ? brightText(1) : mutedText(1), label);
-         float cxp = lx + SpectreWidgets.textWidth(ImGui.getFont(), label) + SpectreWidgets.s(8F);
-         SpectreWidgets.text(dl, small, cxp, by + (th - SpectreWidgets.lineHeight(small)) * 0.5F, on > 0 ? accentAt(0F) : mutedText(0.7F), count);
-         tx += tw + SpectreWidgets.s(6F);
-      }
-      ImGui.end();
-      ImGui.popStyleVar(2);
-   }
-
+   /**
+    * Grid of module cards. A card is the name, one line of description, the keybind and the switch;
+    * a module that is on carries an accent bar on its left edge. Click the switch to toggle, the key
+    * chip to bind, anywhere else to open the settings.
+    */
    private void renderModuleGrid(List<ClientModule> modules, float x, float y, float w, float h, float alpha, float dt) {
       ImGui.setNextWindowPos(x, y, 1);
       ImGui.setNextWindowSize(w, h, 1);
-      ImGui.pushStyleVar(0, Math.max(0.01F, alpha));
+      // Switching category or search fades the new set of cards in once, together.
+      String key = workspaceCategory.name() + "|" + normalizeSearch(globalSearch.get());
+      if (!key.equals(gridKey)) {
+         gridKey = key;
+         gridChangedAt = System.nanoTime();
+      }
+      float enter = 0.25F + 0.75F * easeOut(elapsed(gridChangedAt, 160F));
+      ImGui.pushStyleVar(0, Math.max(0.01F, alpha * enter));
       ImGui.pushStyleVar(2, 0F, 0F);
       ImGui.begin("##corz_grid_window", 8511 | 128);
       if (ImGui.beginChild("##corz_grid", w, h, false, 24)) {
@@ -855,24 +725,14 @@ public final class ClickGuiRenderer {
             ImGui.textDisabled("No modules found");
          }
          float gap = SpectreWidgets.s(8F);
-         int cols = w >= SpectreWidgets.s(560F) ? 2 : 1;
-         float cardW = (w - gap * (cols - 1)) / cols, cardH = SpectreWidgets.s(68F), r = SpectreWidgets.s(10F);
+         int cols = w >= SpectreWidgets.s(1100F) ? 3 : w >= SpectreWidgets.s(500F) ? 2 : 1;
+         float cardW = (w - gap * (cols - 1)) / cols, cardH = SpectreWidgets.s(56F), r = SpectreWidgets.s(9F);
          ImFont font = ImGui.getFont();
          ImFont small = ImGuiManager.getInstance().smallFont();
-         // Switching category or search replays a staggered fade-and-rise of the cards.
-         String key = workspaceCategory.name() + "|" + normalizeSearch(globalSearch.get());
-         if (!key.equals(gridKey)) {
-            gridKey = key;
-            gridChangedAt = System.nanoTime();
-         }
-         float baseAlpha = ImGui.getStyle().getAlpha();
          for (int i = 0; i < modules.size(); i++) {
             ClientModule module = modules.get(i);
             ImGui.pushID(module.id());
-            float enter = easeOut(Math.max(0F, Math.min(1F, (elapsed(gridChangedAt, 260F + i * 28F) * (260F + i * 28F) - i * 28F) / 260F)));
-            ImGui.pushStyleVar(0, Math.max(0.01F, baseAlpha * enter));
-            float lx = i % cols * (cardW + gap), ly = i / cols * (cardH + gap) + SpectreWidgets.s(14F) * (1F - enter);
-            ImGui.setCursorPos(lx, ly);
+            ImGui.setCursorPos(i % cols * (cardW + gap), i / cols * (cardH + gap));
             boolean clicked = ImGui.invisibleButton("##card", cardW, cardH);
             boolean rightClicked = ImGui.isItemClicked(1);
             boolean hovered = ImGui.isItemHovered();
@@ -881,23 +741,23 @@ public final class ClickGuiRenderer {
             float hover = SpectreWidgets.animate(ImGui.getItemID(), hovered, 16F);
             float onT = SpectreWidgets.animate(ImGui.getID("##on"), module.isEnabled(), 12F);
             boolean chosen = detailOpen && module == selectedModule;
+            boolean listening = listeningModule == module, bound = module.keybind() != -1;
 
             float swW = SpectreWidgets.s(34F), swH = SpectreWidgets.s(18F);
-            float swX = cx + cardW - swW - SpectreWidgets.s(18F), swY = cy + (cardH - swH) * 0.5F;
+            float swX = cx + cardW - swW - SpectreWidgets.s(14F), swY = cy + (cardH - swH) * 0.5F;
             boolean overSwitch = ImGui.isMouseHoveringRect(swX - SpectreWidgets.s(8F), cy, cx + cardW, cy + cardH);
-            // Keybind keycap: a small chip left of the switch showing the bound key ("+" when unbound).
-            float bindY = cy + (cardH - swH) * 0.5F;
-            String bindName = listeningModule == module ? "..." : module.keybind() == -1 ? "+" : keyName(module.keybind());
+            // Key chip left of the switch: the bound key, or "+" to add one. Unbound chips only show on hover.
+            String bindName = listening ? "..." : bound ? keyName(module.keybind()) : "+";
             float bindW = Math.max(SpectreWidgets.s(24F), SpectreWidgets.textWidth(small, bindName) + SpectreWidgets.s(12F));
-            float bindX0 = swX - SpectreWidgets.s(12F) - bindW;
-            boolean overBind = ImGui.isMouseHoveringRect(bindX0 - SpectreWidgets.s(3F), bindY - SpectreWidgets.s(3F), bindX0 + bindW + SpectreWidgets.s(3F), bindY + swH + SpectreWidgets.s(3F));
+            float bindX = swX - SpectreWidgets.s(10F) - bindW, bindY = swY;
+            boolean overBind = ImGui.isMouseHoveringRect(bindX - SpectreWidgets.s(3F), bindY - SpectreWidgets.s(3F), bindX + bindW + SpectreWidgets.s(3F), bindY + swH + SpectreWidgets.s(3F));
 
             if (clicked) {
                if (overSwitch) {
                   if (module.isAction()) module.runAction(); else module.toggle();
                   GuiSounds.toggle(module.isAction() || module.isEnabled());
                } else if (overBind) {
-                  listeningModule = listeningModule == module ? null : module;
+                  listeningModule = listening ? null : module;
                   listeningFirstFrame = true;
                   GuiSounds.click();
                } else {
@@ -906,8 +766,6 @@ public final class ClickGuiRenderer {
                   detailOpen = !close;
                   GuiSounds.click();
                }
-               clickedCard = module;
-               clickedAt = System.nanoTime();
             } else if (rightClicked) {
                selectedModule = module;
                detailOpen = true;
@@ -924,73 +782,41 @@ public final class ClickGuiRenderer {
             }
             if (hovered) GuiSounds.hover(ImGui.getItemID());
 
-            // Card body: dark glass with a hairline, lifted slightly on hover with an accent glow underneath.
-            cy -= SpectreWidgets.s(1.5F) * hover;
-            bindY -= SpectreWidgets.s(1.5F) * hover;
-            swY -= SpectreWidgets.s(1.5F) * hover;
-            if (hover > 0.01F || onT > 0.01F) {
-               float glow = Math.max(hover * 0.7F, onT * 0.35F);
-               for (int g = 1; g <= 4; g++) {
-                  float e = SpectreWidgets.s(2F) * g;
-                  dl.addRectFilled(cx - e, cy - e + SpectreWidgets.s(3F), cx + cardW + e, cy + cardH + e + SpectreWidgets.s(3F),
-                     SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0.5F), 0.045F * glow / g)), r + e);
-               }
-            }
-            dl.addRectFilled(cx, cy, cx + cardW, cy + cardH, tone(0.11F + 0.03F * hover, 0.92F), r);
-            HudChrome.gradientVertical(dl, cx, cy, cardW, cardH * 0.5F, r,
-               SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.035F + 0.02F * hover)), SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0F)));
-            // Enabled modules get a soft accent wash instead of an edge bar.
+            // Body: flat dark tile; a faint accent tint and a left bar when the module is on.
+            dl.addRectFilled(cx, cy, cx + cardW, cy + cardH, tone(0.11F + 0.035F * hover, 0.94F), r);
             if (onT > 0.01F) {
-               HudChrome.gradient(dl, cx, cy, cardW, cardH, r, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.10F * onT)),
-                  SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(1F), 0F)), 1F);
+               dl.addRectFilled(cx, cy, cx + cardW, cy + cardH, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.07F * onT)), r);
+               dl.addRectFilled(cx + SpectreWidgets.s(1F), cy + SpectreWidgets.s(12F), cx + SpectreWidgets.s(4F), cy + cardH - SpectreWidgets.s(12F),
+                  SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), onT)), SpectreWidgets.s(2F));
             }
-            // Click ripple: a bright outline that fades out after the card is pressed.
-            float ripple = clickedCard == module ? elapsed(clickedAt, 380F) : 1F;
-            if (ripple < 1F) {
-               float g = SpectreWidgets.s(4F) * easeOut(ripple);
-               dl.addRect(cx - g, cy - g, cx + cardW + g, cy + cardH + g, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.7F * (1F - ripple))), r + g, 0, SpectreWidgets.s(2F));
-            }
-            int border = chosen ? SpectreWidgets.withAlpha(accentAt(0F), 0.8F) : SpectreWidgets.withAlpha(0xFFFFFFFF, 0.06F + 0.08F * hover);
+            int border = chosen ? SpectreWidgets.withAlpha(accentAt(0F), 0.85F) : SpectreWidgets.withAlpha(0xFFFFFFFF, 0.06F + 0.07F * hover);
             dl.addRect(cx, cy, cx + cardW, cy + cardH, SpectreWidgets.c(border), r, 0, chosen ? SpectreWidgets.s(1.5F) : 1F);
 
-            // Icon tile: the category glyph on a tile that fills with the accent gradient when the module is on.
-            float tile = SpectreWidgets.s(36F), tx = cx + SpectreWidgets.s(14F), ty = cy + (cardH - tile) * 0.5F, tr = SpectreWidgets.s(9F);
-            dl.addRectFilled(tx, ty, tx + tile, ty + tile, tone(0.2F + 0.05F * hover, 1F), tr);
-            if (onT > 0.01F) {
-               HudChrome.gradient(dl, tx, ty, tile, tile, tr, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.9F * onT)),
-                  SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(1F), 0.9F * onT)), 1F);
-            }
-            HudChrome.gradientVertical(dl, tx, ty, tile, tile * 0.5F, tr,
-               SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.10F)), SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0F)));
-            dl.addRect(tx, ty, tx + tile, ty + tile, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.08F + 0.1F * onT)), tr, 0, 1F);
-            drawCategoryIcon(dl, module.category(), tx + tile * 0.5F, ty + tile * 0.5F, SpectreWidgets.s(7.5F),
-               SpectreWidgets.c(SpectreTheme.lerpColor(SpectreWidgets.withAlpha(accentAt(0.3F), 1F), onAccentInk(), onT)));
-
-            // Name + info dot.
-            float nameX = tx + tile + SpectreWidgets.s(12F), nameY = cy + cardH * 0.5F - ImGui.getTextLineHeight() - SpectreWidgets.s(1F);
-            float textRight = bindX0 - SpectreWidgets.s(10F);
-            String name = SpectreWidgets.ellipsize(font, module.name(), textRight - nameX);
-            SpectreWidgets.text(dl, font, nameX, nameY, brightText(1), name);
-            // One-line description under the name; hover it for the full text.
+            boolean showBind = bound || listening || hover > 0.01F;
+            float textX = cx + SpectreWidgets.s(16F), textRight = (showBind ? bindX : swX) - SpectreWidgets.s(10F);
             String description = module.description();
-            if (description != null && !description.isBlank()) {
+            boolean described = description != null && !description.isBlank();
+            float nameY = described ? cy + cardH * 0.5F - ImGui.getTextLineHeight() - SpectreWidgets.s(1F) : cy + (cardH - ImGui.getTextLineHeight()) * 0.5F;
+            SpectreWidgets.text(dl, font, textX, nameY, SpectreTheme.lerpColor(brightText(0.9F), brightText(1), Math.max(onT, hover)),
+               SpectreWidgets.ellipsize(font, module.name(), textRight - textX));
+            if (described) {
                float dy = cy + cardH * 0.5F + SpectreWidgets.s(3F);
-               String line = SpectreWidgets.ellipsize(small, description, textRight - nameX);
-               SpectreWidgets.text(dl, small, nameX, dy, mutedText(0.85F), line);
-               if (!line.equals(description) && hovered && ImGui.isMouseHoveringRect(nameX, dy - SpectreWidgets.s(2F), textRight, dy + SpectreWidgets.lineHeight(small) + SpectreWidgets.s(2F))) showTooltip(description);
+               String line = SpectreWidgets.ellipsize(small, description, textRight - textX);
+               SpectreWidgets.text(dl, small, textX, dy, mutedText(0.85F), line);
+               if (!line.equals(description) && hovered && !overSwitch && !overBind) showTooltip(description);
             }
 
-            // Keycap: click to rebind (Esc clears). Lit in the accent while listening or bound.
-            boolean listening = listeningModule == module, bound = module.keybind() != -1;
-            float capHover = overBind && hovered ? 1F : 0F;
-            dl.addRectFilled(bindX0, bindY + SpectreWidgets.s(1.5F), bindX0 + bindW, bindY + swH + SpectreWidgets.s(1.5F), SpectreWidgets.c(SpectreWidgets.withAlpha(0xFF000000, 0.35F)), SpectreWidgets.s(5F));
-            dl.addRectFilled(bindX0, bindY, bindX0 + bindW, bindY + swH, tone(0.24F + 0.08F * capHover, 1F), SpectreWidgets.s(5F));
-            dl.addRect(bindX0, bindY, bindX0 + bindW, bindY + swH,
-               SpectreWidgets.c(listening ? SpectreWidgets.withAlpha(accentAt(0F), 0.9F) : SpectreWidgets.withAlpha(0xFFFFFFFF, 0.10F + 0.12F * capHover)), SpectreWidgets.s(5F), 0, 1F);
-            SpectreWidgets.text(dl, small, bindX0 + (bindW - SpectreWidgets.textWidth(small, bindName)) * 0.5F, bindY + (swH - SpectreWidgets.lineHeight(small)) * 0.5F,
-               listening ? accentAt(0F) : bound ? brightText(0.95F) : mutedText(0.8F), bindName);
+            if (showBind) {
+               float capAlpha = bound || listening ? 1F : hover;
+               float capHover = overBind && hovered ? 1F : 0F;
+               dl.addRectFilled(bindX, bindY, bindX + bindW, bindY + swH, tone(0.22F + 0.08F * capHover, capAlpha), SpectreWidgets.s(5F));
+               dl.addRect(bindX, bindY, bindX + bindW, bindY + swH,
+                  SpectreWidgets.c(listening ? SpectreWidgets.withAlpha(accentAt(0F), 0.9F) : SpectreWidgets.withAlpha(0xFFFFFFFF, (0.10F + 0.12F * capHover) * capAlpha)), SpectreWidgets.s(5F), 0, 1F);
+               SpectreWidgets.text(dl, small, bindX + (bindW - SpectreWidgets.textWidth(small, bindName)) * 0.5F, bindY + (swH - SpectreWidgets.lineHeight(small)) * 0.5F,
+                  listening ? accentAt(0F) : bound ? brightText(0.95F) : mutedText(0.8F * capAlpha), bindName);
+            }
 
-            // Switch, or a play chip for one-shot actions.
+            // Switch, or a play button for one-shot actions.
             if (module.isAction()) {
                float pr = swH * 0.55F, pcx = swX + swW - pr, pcy = swY + swH * 0.5F;
                dl.addCircleFilled(pcx, pcy, pr + SpectreWidgets.s(1F), SpectreWidgets.c(overSwitch && hovered ? accentAt(0F) : GuiPalette.surfaceHover()), 20);
@@ -998,22 +824,14 @@ public final class ClickGuiRenderer {
             } else {
                SpectreWidgets.drawSwitch(dl, swX, swY, swW, swH, onT);
             }
-            if (hovered && !overBind && overSwitch) showTooltip(module.isAction() ? "Run" : module.isEnabled() ? "Turn off" : "Turn on");
-            else if (hovered && overBind) showTooltip(listeningModule == module ? "Press a key  ·  Esc clears" : "Click to set a keybind");
-            ImGui.popStyleVar();
+            if (hovered && overBind) showTooltip(listening ? "Press a key  ·  Esc clears" : "Click to set a keybind");
+            else if (hovered && overSwitch) showTooltip(module.isAction() ? "Run" : module.isEnabled() ? "Turn off" : "Turn on");
             ImGui.popID();
          }
          int rows = (modules.size() + cols - 1) / cols;
          ImGui.setCursorPos(0, rows * (cardH + gap));
          ImGui.dummy(1, SpectreWidgets.s(4F));
          applySmoothScroll("corz_grid", dt);
-         // Fade the cards out toward the bottom edge while there is more to scroll.
-         if (ImGui.getScrollY() < ImGui.getScrollMaxY() - 1F) {
-            ImDrawList fdl = ImGui.getWindowDrawList();
-            float fy = ImGui.getWindowPosY() + h, fh = SpectreWidgets.s(34F);
-            int solid = tone(0.06F, 0.96F), clear = tone(0.06F, 0F);
-            fdl.addRectFilledMultiColor(ImGui.getWindowPosX(), fy - fh, ImGui.getWindowPosX() + w, fy, clear, clear, solid, solid);
-         }
       }
       ImGui.endChild();
       ImGui.end();
@@ -1940,83 +1758,20 @@ public final class ClickGuiRenderer {
       return ModuleRegistry.inCategory(category);
    }
 
-   /** A sidebar entry covering one or more categories; {@code icon} supplies the glyph. */
-   private record NavGroup(String label, ModuleCategory icon, List<ModuleCategory> members) {}
+   /** Sidebar order. Categories an addon registers later follow the built-in ones. */
+   private static final List<ModuleCategory> NAV_ORDER = List.of(ModuleCategory.COMBAT, ModuleCategory.MOVEMENT, ModuleCategory.RENDER, ModuleCategory.VISUALS,
+      ModuleCategory.BASE_RAID, ModuleCategory.DONUT, ModuleCategory.MISC, ModuleCategory.CLIENT, ModuleCategory.BASE_BUILDER);
 
-   private static final List<NavGroup> NAV_GROUPS = List.of(
-      new NavGroup("Combat", ModuleCategory.COMBAT, List.of(ModuleCategory.COMBAT, ModuleCategory.BASE_RAID)),
-      new NavGroup("Movement", ModuleCategory.MOVEMENT, List.of(ModuleCategory.MOVEMENT)),
-      new NavGroup("Visuals", ModuleCategory.VISUALS, List.of(ModuleCategory.VISUALS, ModuleCategory.RENDER)),
-      new NavGroup("Misc", ModuleCategory.MISC, List.of(ModuleCategory.MISC, ModuleCategory.DONUT, ModuleCategory.CLIENT)),
-      new NavGroup("Builder", ModuleCategory.BASE_BUILDER, List.of(ModuleCategory.BASE_BUILDER))
-   );
-
-   /** The group's categories that have modules (Builder always shows); categories outside every group land in Misc. */
-   private List<ModuleCategory> groupCategories(NavGroup group) {
+   /** Every category with modules (the Builder always shows), each as its own sidebar row. */
+   private List<ModuleCategory> navCategories() {
       List<ModuleCategory> out = new ArrayList<>();
-      for (ModuleCategory category : group.members()) {
+      for (ModuleCategory category : NAV_ORDER) {
          if (category == ModuleCategory.BASE_BUILDER || !modulesFor(category).isEmpty()) out.add(category);
       }
-      if (group.icon() == ModuleCategory.MISC) {
-         for (ModuleCategory category : ModuleCategory.values()) {
-            boolean grouped = NAV_GROUPS.stream().anyMatch(g -> g.members().contains(category));
-            if (!grouped && !modulesFor(category).isEmpty()) out.add(category);
-         }
+      for (ModuleCategory category : ModuleCategory.values()) {
+         if (!NAV_ORDER.contains(category) && !modulesFor(category).isEmpty()) out.add(category);
       }
       return out;
-   }
-
-   private NavGroup groupOf(ModuleCategory category) {
-      for (NavGroup group : NAV_GROUPS) {
-         if (group.members().contains(category)) return group;
-      }
-      return NAV_GROUPS.get(3);
-   }
-
-   /** HUD / Configs / Theme / Socials as one row of icon buttons instead of four list rows. */
-   private void generalStrip(float w) {
-      Tab[] tabs = {Tab.HUD, Tab.CONFIG, Tab.THEME, Tab.FRIENDS};
-      String[] labels = {"HUD editor", "Configs", "Theme", "Socials"};
-      // Narrow (icon-only) sidebars stack them instead.
-      int cols = w > SpectreWidgets.s(100F) ? tabs.length : 1;
-      float side = SpectreWidgets.s(8F), gap = SpectreWidgets.s(4F), bh = SpectreWidgets.s(32F);
-      float bw = (w - side * 2 - gap * (cols - 1)) / cols;
-      float localY = ImGui.getCursorPosY();
-      ImDrawList dl = ImGui.getWindowDrawList();
-      for (int i = 0; i < tabs.length; i++) {
-         Tab target = tabs[i];
-         boolean chosen = tab == target;
-         ImGui.setCursorPos(side + i % cols * (bw + gap), localY + i / cols * (bh + gap));
-         if (ImGui.invisibleButton("##gen_" + target.name(), bw, bh)) {
-            if (!chosen) GuiSounds.click();
-            switchTab(target);
-         }
-         boolean hovered = ImGui.isItemHovered();
-         float glow = SpectreWidgets.animate(ImGui.getItemID(), chosen || hovered, 18F);
-         float bx = ImGui.getItemRectMinX(), by = ImGui.getItemRectMinY(), rr = SpectreWidgets.s(8F);
-         if (chosen) {
-            HudChrome.gradient(dl, bx, by, bw, bh, rr, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.28F)), SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(1F), 0.16F)), 1F);
-            dl.addRect(bx, by, bx + bw, by + bh, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.45F)), rr, 0, 1F);
-         } else {
-            dl.addRectFilled(bx, by, bx + bw, by + bh, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.03F + 0.05F * glow)), rr);
-         }
-         float cx = bx + bw * 0.5F, cy = by + bh * 0.5F, r = SpectreWidgets.s(7.5F), th = SpectreWidgets.s(1.5F);
-         int raw = chosen ? GuiPalette.accent() : SpectreTheme.lerpColor(0xFFB4ABB6, 0xFFF4F0F5, glow);
-         int color = SpectreWidgets.c(raw);
-         switch (target) {
-            case HUD -> SpectreWidgets.monitor(dl, cx, cy, r, raw);
-            case CONFIG -> net.spectre.client.gui.mainmenu.MenuIcons.folder(dl, cx, cy, r, color, th);
-            case THEME -> SpectreWidgets.eye(dl, cx, cy, r, raw);
-            case FRIENDS -> {
-               net.spectre.client.gui.mainmenu.MenuIcons.person(dl, cx - r * 0.35F, cy, r * 0.8F, color, th);
-               net.spectre.client.gui.mainmenu.MenuIcons.person(dl, cx + r * 0.55F, cy, r * 0.65F, color, th);
-            }
-            default -> {}
-         }
-         if (hovered) showTooltip(labels[i]);
-      }
-      int rows = (tabs.length + cols - 1) / cols;
-      ImGui.setCursorPos(0, localY + rows * (bh + gap));
    }
 
    private List<ClientModule> searchModules(String query) {
