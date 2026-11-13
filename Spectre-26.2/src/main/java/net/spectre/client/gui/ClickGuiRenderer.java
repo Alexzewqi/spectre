@@ -214,13 +214,13 @@ public final class ClickGuiRenderer {
    private float contentX, contentY, contentW, contentH;
    private static String clientVersion;
 
-   /** Near-black mixed toward the accent; t=0 is the darkest base, higher is lighter and more saturated. */
+   /** Neutral near-black to grey with only a trace of the accent; t=0 is the darkest base, higher is lighter. */
    private static int tone(float t, float alpha) {
       // Halloween keeps orange for accents but builds surfaces from a deep purple.
       // Surfaces start from a cool, near-neutral black and take only a hint of the accent, so panels
       // read as clean dark glass instead of a muddy tinted fill.
-      int toward = spooky ? 0xFF8A2E9C : SpectreTheme.lerpColor(0xFF2A2420, GuiPalette.accent(), 0.45F);
-      return SpectreWidgets.c(SpectreWidgets.withAlpha(SpectreTheme.lerpColor(0xFF0D0A09, toward, t), alpha));
+      int toward = spooky ? 0xFF8A2E9C : SpectreTheme.lerpColor(0xFF6E6E74, GuiPalette.accent(), 0.06F);
+      return SpectreWidgets.c(SpectreWidgets.withAlpha(SpectreTheme.lerpColor(spooky ? 0xFF0D0A09 : 0xFF09090A, toward, t), alpha));
    }
 
    /** True while the Halloween preset is active; refreshed once per frame. */
@@ -272,7 +272,7 @@ public final class ClickGuiRenderer {
 
    // Text colours stay unconverted: SpectreWidgets.text applies the style alpha itself.
    private static int mutedText(float alpha) {
-      return SpectreWidgets.withAlpha(SpectreTheme.lerpColor(0xFFB4ABB6, GuiPalette.accent(), 0.18F), alpha);
+      return SpectreWidgets.withAlpha(SpectreTheme.lerpColor(0xFFB2B2B8, GuiPalette.accent(), 0.05F), alpha);
    }
 
    private static int brightText(float alpha) {
@@ -381,20 +381,10 @@ public final class ClickGuiRenderer {
          float r = SpectreWidgets.s(18F);
          drawShadow(workspaceX, workspaceY, workspaceW, workspaceH, r, 8);
          // The logo sits on a round tab rising out of the top edge.
-         bg.addCircleFilled(workspaceX + workspaceW * 0.5F, workspaceY + SpectreWidgets.s(20F), SpectreWidgets.s(46F), tone(0.06F, 0.96F * open), 48);
-         pane(bg, workspaceX, workspaceY, workspaceW, workspaceH, r, 0.06F, 0.96F * open);
+         pane(bg, workspaceX, workspaceY, workspaceW, workspaceH, r, 0.02F, open);
+         bg.addCircleFilled(workspaceX + workspaceW * 0.5F, workspaceY + SpectreWidgets.s(14F), SpectreWidgets.s(50F), tone(0.02F, open), 64);
          bg.addRect(workspaceX, workspaceY, workspaceX + workspaceW, workspaceY + workspaceH, spooky
             ? SpectreWidgets.c(SpectreWidgets.withAlpha(GuiPalette.accent(), 0.45F * open)) : SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.08F * open)), r, 0, 1);
-         if (!spooky) {
-            // Accent-tinted top rim, plus two glints that drift along the top and bottom edges in opposite directions.
-            HudChrome.gradientVertical(bg, workspaceX, workspaceY, workspaceW, SpectreWidgets.s(90F), r,
-               SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0.5F), 0.07F * open)), SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0.5F), 0F)));
-            double gt = System.nanoTime() / 1.0E9;
-            float span = workspaceW - r * 2, len = workspaceW * 0.32F, p = frac((float) (gt * 0.09));
-            edgeGlint(bg, workspaceX + r, workspaceX + workspaceW - r, workspaceY + 0.5F, workspaceX + r + (span + len) * p, len, accentAt(p), 0.85F * open);
-            float q = 1F - frac((float) (gt * 0.09) + 0.5F);
-            edgeGlint(bg, workspaceX + r, workspaceX + workspaceW - r, workspaceY + workspaceH - 0.5F, workspaceX + r + (span + len) * q, len, accentAt(q), 0.5F * open);
-         }
          if (openSweep < 1F) {
             // Accent glow fading out around the frame, and a bright streak running along its top edge.
             float fade = 1F - openSweep;
@@ -460,18 +450,29 @@ public final class ClickGuiRenderer {
       ImGui.popStyleColor(3);
 
       // Page links, right-aligned; the open page is drawn in the accent colour.
-      Tab[] pages = {Tab.FRIENDS, Tab.CONFIG, Tab.THEME, Tab.HUD};
+      // Rightmost first. The Builder opens its workspace in place of the module cards.
+      boolean builderOpen = tab == Tab.MODULES && workspaceCategory == ModuleCategory.BASE_BUILDER && normalizeSearch(globalSearch.get()).isEmpty();
+      Tab[] pages = {Tab.FRIENDS, Tab.CONFIG, Tab.THEME, Tab.HUD, Tab.MODULES};
       float right = x + w - SpectreWidgets.s(tab == Tab.HUD ? 12F : 2F), linkH = SpectreWidgets.s(28F), ly = sy;
       for (Tab page : pages) {
-         String label = pageTitle(page);
+         boolean builder = page == Tab.MODULES;
+         String label = builder ? "Builder" : pageTitle(page);
          float lw = SpectreWidgets.textWidth(small, label) + SpectreWidgets.s(18F);
          right -= lw;
          ImGui.setCursorScreenPos(right, ly);
+         boolean chosen = builder ? builderOpen : tab == page;
          if (ImGui.invisibleButton("##page_" + page.name(), lw, linkH)) {
-            if (tab != page) GuiSounds.click();
-            switchTab(tab == page ? Tab.MODULES : page);
+            if (!chosen) GuiSounds.click();
+            if (builder) {
+               switchTab(Tab.MODULES);
+               globalSearch.set("");
+               selectedModule = null;
+               detailOpen = false;
+               workspaceCategory = builderOpen ? navCategories().getFirst() : ModuleCategory.BASE_BUILDER;
+            } else {
+               switchTab(chosen ? Tab.MODULES : page);
+            }
          }
-         boolean chosen = tab == page;
          float glow = SpectreWidgets.animate(ImGui.getItemID(), chosen || ImGui.isItemHovered(), 18F);
          if (chosen) dl.addRectFilled(right, ly, right + lw, ly + linkH, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.16F)), linkH * 0.5F);
          SpectreWidgets.text(dl, small, right + SpectreWidgets.s(9F), ly + (linkH - SpectreWidgets.lineHeight(small)) * 0.5F,
@@ -506,27 +507,29 @@ public final class ClickGuiRenderer {
    /** Header: the logo in the middle with the categories as text tabs on either side of it. */
    private void renderTopBar(float open) {
       float h = headerH(), x = workspaceX, y = workspaceY, w = workspaceW;
-      ImGui.setNextWindowPos(x, y - SpectreWidgets.s(30F), 1);
-      ImGui.setNextWindowSize(w, h + SpectreWidgets.s(30F), 1);
+      ImGui.setNextWindowPos(x, y - SpectreWidgets.s(44F), 1);
+      ImGui.setNextWindowSize(w, h + SpectreWidgets.s(44F), 1);
       ImGui.pushStyleVar(0, Math.max(0.01F, open));
       ImGui.pushStyleVar(2, 0F, 0F);
       ImGui.begin("##corz_topbar", 8511 | 128);
       ImDrawList dl = ImGui.getWindowDrawList();
-      float cx = x + w * 0.5F, logoY = y + SpectreWidgets.s(18F), lr = SpectreWidgets.s(15F);
+      float cx = x + w * 0.5F, logoY = y + SpectreWidgets.s(12F), lr = SpectreWidgets.s(19F);
       if (spooky) {
          HalloweenDecor.pumpkin(dl, cx, logoY, lr, 1);
       } else {
          dl.pathClear();
          dl.pathArcTo(cx, logoY, lr, (float) (Math.PI * 0.28), (float) (Math.PI * 1.72), 32);
-         dl.pathStroke(SpectreWidgets.c(brightText(1)), 0, SpectreWidgets.s(7F));
+         dl.pathStroke(SpectreWidgets.c(0xFFFFFFFF), 0, SpectreWidgets.s(9.5F));
       }
       if (ImGui.isMouseHoveringRect(cx - lr * 1.4F, logoY - lr * 1.4F, cx + lr * 1.4F, logoY + lr * 1.4F)) showTooltip("Spectre " + clientVersion());
 
       boolean searching = !normalizeSearch(globalSearch.get()).isEmpty();
-      List<ModuleCategory> categories = navCategories();
+      // The Builder is a tool, not a module list, so it lives with the pages in the footer; that leaves an even row here.
+      List<ModuleCategory> categories = new ArrayList<>(navCategories());
+      categories.remove(ModuleCategory.BASE_BUILDER);
       int leftCount = (categories.size() + 1) / 2;
-      ImFont font = ImGuiManager.getInstance().categoryFont();
-      float edge = SpectreWidgets.s(22F), hole = SpectreWidgets.s(58F), tabH = SpectreWidgets.s(34F), tabY = y + (h - tabH) * 0.5F + SpectreWidgets.s(2F);
+      ImFont font = ImGui.getFont();
+      float edge = SpectreWidgets.s(26F), hole = SpectreWidgets.s(70F), tabH = SpectreWidgets.s(34F), tabY = y + (h - tabH) * 0.5F + SpectreWidgets.s(4F);
       for (int i = 0; i < categories.size(); i++) {
          ModuleCategory category = categories.get(i);
          boolean leftSide = i < leftCount;
@@ -551,7 +554,7 @@ public final class ClickGuiRenderer {
          float glow = SpectreWidgets.animate(ImGui.getItemID(), chosen || hovered, 18F);
          float on = SpectreWidgets.animate(ImGui.getID("##tab_on_" + category.name()), chosen, 16F);
          SpectreWidgets.text(dl, font, centre - tw * 0.5F, tabY + (tabH - SpectreWidgets.lineHeight(font)) * 0.5F,
-            SpectreTheme.lerpColor(mutedText(1), brightText(1), glow), label);
+            SpectreTheme.lerpColor(brightText(0.78F), 0xFFFFFFFF, glow), label);
          if (on > 0.01F) {
             float uw = tw * 0.5F * on, uy = tabY + tabH - SpectreWidgets.s(3F);
             dl.addRectFilled(centre - uw, uy, centre + uw, uy + SpectreWidgets.s(2.5F), SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), on)), SpectreWidgets.s(2F));
@@ -698,7 +701,7 @@ public final class ClickGuiRenderer {
             }
             if (hovered) GuiSounds.hover(ImGui.getItemID());
 
-            dl.addRectFilled(cx, cy, cx + cardW, cy + cardH, tone(0.125F + 0.03F * hover, 1F), r);
+            dl.addRectFilled(cx, cy, cx + cardW, cy + cardH, tone(0.15F + 0.04F * hover, 1F), r);
             if (chosen) dl.addRect(cx, cy, cx + cardW, cy + cardH, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.85F)), r, 0, SpectreWidgets.s(1.5F));
             String name = SpectreWidgets.ellipsize(nameFont, module.name(), swX - cx - pad - SpectreWidgets.s(10F));
             SpectreWidgets.text(dl, nameFont, cx + pad, cy + (headH - SpectreWidgets.lineHeight(nameFont)) * 0.5F + SpectreWidgets.s(3F), brightText(1), name);

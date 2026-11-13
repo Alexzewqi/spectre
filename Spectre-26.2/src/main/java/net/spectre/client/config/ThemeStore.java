@@ -33,7 +33,8 @@ public final class ThemeStore {
    private static final int CONFIG_VERSION = 2;
    private static final String THEME_KEY = "spectreTheme";
    public static final List<ThemeStore.Preset> PRESETS = List.of(
-      new ThemeStore.Preset("Default", 0xFF56DCCB, 0xFF182230, 0xFF101823),
+      new ThemeStore.Preset("Default", 0xFFD56BEA, 0xFF0C0C0E, 0xFF161618, "Solid", 0xFFA66BFF),
+      new ThemeStore.Preset("Teal", 0xFF56DCCB, 0xFF182230, 0xFF101823),
       new ThemeStore.Preset("Liquid Glass", 0xFF8FD3FF, 0xFF1A2230, 0xFF141A24, "Liquid Glass", 0xFFE3B8FF),
       new ThemeStore.Preset("Glass Dark", 0xFFB9C6FF, 0xFF0B0D12, 0xFF08090D, "Liquid Glass", 0xFF7FE7FF),
       new ThemeStore.Preset("Aurora", 0xFF7B5CFF, 0xFF141228, 0xFF0E0C1E, "Gradient", 0xFF2EE6C8),
@@ -51,9 +52,9 @@ public final class ThemeStore {
       new ThemeStore.Preset("Mono", -1710101, -14671840, -15263977)
    );
    public static final String STYLE_SOLID = "Solid", STYLE_GRADIENT = "Gradient", STYLE_GLASS = "Liquid Glass";
-   public final ColorSetting accent = new ColorSetting("Accent", 0xFF56DCCB);
+   public final ColorSetting accent = new ColorSetting("Accent", 0xFFD56BEA);
    /** Second accent: the far end of gradient themes. */
-   public final ColorSetting accent2 = new ColorSetting("Second accent", 0xFF7B6CFF);
+   public final ColorSetting accent2 = new ColorSetting("Second accent", 0xFFA66BFF);
    public final ModeSetting guiStyle = new ModeSetting("GUI style", STYLE_SOLID, STYLE_SOLID, STYLE_GRADIENT, STYLE_GLASS);
    public final NumberSetting rounding = new NumberSetting("Corner radius", 10.0F, 0.0F, 16.0F).step(1.0F);
    public final NumberSetting backgroundDim = new NumberSetting("Background dim", 0.25F, 0.0F, 0.8F).step(0.05F);
@@ -69,9 +70,9 @@ public final class ThemeStore {
    public final BooleanSetting hoverSounds = new BooleanSetting("Hover sounds", false);
    /** Uses the system's Segoe UI for the GUI when it is installed; the bundled Geist otherwise. */
    public final BooleanSetting systemFont = new BooleanSetting("Arial font", true);
-   public final Surface panels = new Surface("panels", "Panels", false, 0xFF182230, 0.92F, 0.45F);
-   public final Surface cards = new Surface("cards", "Cards", true, 0xFF101823, 0.97F, 0.85F);
-   public final Surface tabBar = new Surface("tabbar", "Tab bar", false, 0xFF101823, 0.97F, 0.5F);
+   public final Surface panels = new Surface("panels", "Panels", false, 0xFF0C0C0E, 0.92F, 0.45F);
+   public final Surface cards = new Surface("cards", "Cards", true, 0xFF161618, 0.97F, 0.85F);
+   public final Surface tabBar = new Surface("tabbar", "Tab bar", false, 0xFF161618, 0.97F, 0.5F);
    private final List<Surface> surfaces = List.of(this.panels, this.cards, this.tabBar);
    private final List<Setting> shared;
    private final List<Setting> settings;
