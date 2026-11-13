@@ -83,6 +83,7 @@ import net.spectre.client.module.impl.render.CustomCrosshairModule;
 import net.spectre.client.module.impl.render.CustomFovModule;
 import net.spectre.client.module.impl.render.CustomGlintModule;
 import net.spectre.client.module.impl.render.GlossyArmorModule;
+import net.spectre.client.module.impl.render.DeepScanModule;
 import net.spectre.client.module.impl.render.EchoFinderModule;
 import net.spectre.client.module.impl.render.EspModule;
 import net.spectre.client.module.impl.render.FloatingRelicsModule;
@@ -200,6 +201,7 @@ public final class BuiltinModuleProvider implements ModuleProvider {
          new ItemOutlineModule(),
          new SkinChangeModule(),
          new SpawnerNotifierModule(),
+         new DeepScanModule(),
          new TrailFinderModule(),
          new BaseRadarModule(),
          new SusChunkFinderModule(),

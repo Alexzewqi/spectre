@@ -3113,6 +3113,78 @@
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/SpawnerNotifierModule.java"
     },
     {
+      "id": "deep-scan",
+      "name": "Deep Scan",
+      "description": "Finds underground bases from above on servers that hide the underground. Adds up leaked chest, hopper, furnace and spawner data, block types a section lists but does not show, and zeroed sky light. Ignores trial chambers and ancient cities.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Evidence needed",
+          "type": "Number",
+          "default": "6.0",
+          "range": "1.0 to 40.0"
+        },
+        {
+          "label": "Only below Y",
+          "type": "Number",
+          "default": "0.0",
+          "range": "-64.0 to 320.0"
+        },
+        {
+          "label": "Leaked block entities",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Palette ghosts",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Zeroed sky light",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Ignore trial chambers and ancient cities",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Box the evidence blocks",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Evidence color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk tracers",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Distance labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Save finds to file",
+          "type": "Boolean",
+          "default": "On"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/DeepScanModule.java"
+    },
+    {
       "id": "trail-finder",
       "name": "Trail Finder",
       "description": "Marks chunks someone has already loaded (green) apart from chunks generated just now (red), using how water and lava have flowed. Follow the green through the red to reach a base. Needs no underground blocks; useless on a fully pre-generated world.",
