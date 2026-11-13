@@ -114,6 +114,7 @@ public final class PlayerBypassModule extends ClientModule {
                }
             }
 
+            net.spectre.client.util.BaseFinds.publish(this.name(), flagged);
             if (this.tracers.get()) {
                this.chunkAreas.drawTracers(flagged, y + 0.5, ARGB.opaque(color));
             }

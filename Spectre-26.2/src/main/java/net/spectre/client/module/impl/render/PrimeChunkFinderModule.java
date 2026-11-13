@@ -221,6 +221,7 @@ public final class PrimeChunkFinderModule extends ClientModule {
    public void onRender3D(Render3DEvent event) {
       if (!this.shownChunks.isEmpty() && Minecraft.getInstance().level != null) {
          int fill = this.chunkColor.argb();
+         net.spectre.client.util.BaseFinds.publish(this.name(), this.shownChunks);
          ChunkOverlay.draw(this.shownChunks, fill, event.partialTick);
          if (this.logFinds.get()) {
             net.spectre.client.util.BaseFinds.track(this.shownChunks, this.name());

@@ -3113,6 +3113,86 @@
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/SpawnerNotifierModule.java"
     },
     {
+      "id": "base-radar",
+      "name": "Base Radar",
+      "description": "Combines every base finder into one ranked list. Sites that several methods agree on come first, a tracer points at the next one, and walking up to a site ticks it off.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Turn on all finders",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Order",
+          "type": "Mode",
+          "default": "Best first",
+          "options": [
+            "Best first",
+            "Nearest first"
+          ]
+        },
+        {
+          "label": "Methods that must agree",
+          "type": "Number",
+          "default": "1.0",
+          "range": "1.0 to 5.0"
+        },
+        {
+          "label": "Bases to find",
+          "type": "Number",
+          "default": "5.0",
+          "range": "1.0 to 20.0"
+        },
+        {
+          "label": "Checked when within",
+          "type": "Number",
+          "default": "20.0",
+          "range": "6.0 to 64.0"
+        },
+        {
+          "label": "List length",
+          "type": "Number",
+          "default": "5.0",
+          "range": "1.0 to 12.0"
+        },
+        {
+          "label": "Show list",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Tracer and beam to target",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Target color",
+          "type": "Color"
+        },
+        {
+          "label": "Turn on all finders now",
+          "type": "Action"
+        },
+        {
+          "label": "Copy target coordinates",
+          "type": "Action"
+        },
+        {
+          "label": "Skip current target",
+          "type": "Action"
+        },
+        {
+          "label": "Forget all sites",
+          "type": "Action"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/BaseRadarModule.java"
+    },
+    {
       "id": "sus-chunk-finder",
       "name": "Sus Chunk Finder",
       "description": "Colored object outlines for containers, machines, redstone and base clues. Look at a group for an inventory-style breakdown. Amethyst and growth clues are not proof of a base.",

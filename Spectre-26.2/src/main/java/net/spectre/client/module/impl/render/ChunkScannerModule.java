@@ -821,6 +821,7 @@ public final class ChunkScannerModule extends ClientModule {
    @EventHandler
    public void onRender3D(Render3DEvent event) {
       if (Minecraft.getInstance().level != null) {
+         net.spectre.client.util.BaseFinds.publish(this.name(), this.shown);
          ChunkOverlay.draw(this.shown, this.chunkColor.argb(), event.partialTick);
          if (this.logFinds.get()) {
             net.spectre.client.util.BaseFinds.track(this.shown, this.name());

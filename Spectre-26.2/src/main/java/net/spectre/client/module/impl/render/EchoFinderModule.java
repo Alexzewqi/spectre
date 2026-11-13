@@ -359,6 +359,7 @@ public final class EchoFinderModule extends ClientModule {
       }
 
       if (!this.flagged.isEmpty()) {
+         BaseFinds.publish(this.name(), this.flagged);
          ChunkOverlay.draw(this.flagged, this.chunkColor.argb(), event.partialTick);
          if (this.logFinds.get()) {
             BaseFinds.track(this.flagged, this.name());

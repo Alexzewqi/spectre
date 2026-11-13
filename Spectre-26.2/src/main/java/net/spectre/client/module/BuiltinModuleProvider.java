@@ -73,6 +73,7 @@ import net.spectre.client.module.impl.movement.SpiderModule;
 import net.spectre.client.module.impl.movement.SprintModule;
 import net.spectre.client.module.impl.movement.TridentBoostModule;
 import net.spectre.client.module.impl.render.AtmosphereModule;
+import net.spectre.client.module.impl.render.BaseRadarModule;
 import net.spectre.client.module.impl.render.BlockEntityDebugModule;
 import net.spectre.client.module.impl.render.BlockEspModule;
 import net.spectre.client.module.impl.render.BlockOverlayModule;
@@ -198,6 +199,7 @@ public final class BuiltinModuleProvider implements ModuleProvider {
          new ItemOutlineModule(),
          new SkinChangeModule(),
          new SpawnerNotifierModule(),
+         new BaseRadarModule(),
          new SusChunkFinderModule(),
          new EchoFinderModule(),
          new SoundEspModule(),
