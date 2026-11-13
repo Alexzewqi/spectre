@@ -3113,6 +3113,57 @@
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/SpawnerNotifierModule.java"
     },
     {
+      "id": "trail-finder",
+      "name": "Trail Finder",
+      "description": "Marks chunks someone has already loaded (green) apart from chunks generated just now (red), using how water and lava have flowed. Follow the green through the red to reach a base. Needs no underground blocks; useless on a fully pre-generated world.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Show visited chunks",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Visited color",
+          "type": "Color"
+        },
+        {
+          "label": "Show fresh chunks",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Fresh color",
+          "type": "Color"
+        },
+        {
+          "label": "Marker Y",
+          "type": "Number",
+          "default": "63.0",
+          "range": "-64.0 to 320.0"
+        },
+        {
+          "label": "Draw radius (chunks)",
+          "type": "Number",
+          "default": "32.0",
+          "range": "4.0 to 96.0"
+        },
+        {
+          "label": "Alert when a trail starts",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Clear marks",
+          "type": "Action"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/TrailFinderModule.java"
+    },
+    {
       "id": "base-radar",
       "name": "Base Radar",
       "description": "Combines every base finder into one ranked list. Sites that several methods agree on come first, a tracer points at the next one, and walking up to a site ticks it off.",

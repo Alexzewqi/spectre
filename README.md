@@ -1,6 +1,6 @@
 # Spectre
 
-A fully open-source Fabric client for **Minecraft 26.2**, with a custom interface, 120 built-in modules, schematic previews and building, world inspection, media playback, and theme-matched skies.
+A fully open-source Fabric client for **Minecraft 26.2**, with a custom interface, 121 built-in modules, schematic previews and building, world inspection, media playback, and theme-matched skies.
 
 **Created by Cody (cody-raves).**
 

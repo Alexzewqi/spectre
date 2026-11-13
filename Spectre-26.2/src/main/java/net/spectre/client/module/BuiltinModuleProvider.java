@@ -114,6 +114,7 @@ import net.spectre.client.module.impl.render.TargetEspModule;
 import net.spectre.client.module.impl.render.TimeChangerModule;
 import net.spectre.client.module.impl.render.TotemSpiritModule;
 import net.spectre.client.module.impl.render.TracersModule;
+import net.spectre.client.module.impl.render.TrailFinderModule;
 import net.spectre.client.module.impl.render.TrajectoriesModule;
 import net.spectre.client.module.impl.render.XrayModule;
 import net.spectre.client.module.impl.render.ZoomModule;
@@ -199,6 +200,7 @@ public final class BuiltinModuleProvider implements ModuleProvider {
          new ItemOutlineModule(),
          new SkinChangeModule(),
          new SpawnerNotifierModule(),
+         new TrailFinderModule(),
          new BaseRadarModule(),
          new SusChunkFinderModule(),
          new EchoFinderModule(),
