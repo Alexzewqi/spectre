@@ -34,6 +34,15 @@ final class FeaturePreview {
             ThemeStore.get().applyPreset(ThemeStore.PRESETS.stream().filter(p->p.name().equals("Violet")).findFirst().orElseThrow());
             mc.gui.setScreen(new net.spectre.client.gui.ImGuiScreen());stage=30;return;
         }
+        if(Boolean.getBoolean("spectre.knifePreview")){
+            // Each knife design in the main hand, one capture per style; quits when done.
+            ModuleRegistry.get(SpectralHoodModule.class).setEnabled(false);ModuleRegistry.get(FloatingRelicsModule.class).setEnabled(false);
+            var server=mc.getSingleplayerServer();
+            server.execute(()->server.getCommands().performPrefixedCommand(server.createCommandSourceStack(),"item replace entity @a weapon.mainhand with diamond_sword"));
+            mc.player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
+            mc.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+            stage=39;return;
+        }
         if(Boolean.getBoolean("spectre.handPreview")){
             // Held-item effect check: sword in hand, outline, glow, then off; quits when done.
             ModuleRegistry.get(SpectralHoodModule.class).setEnabled(false);ModuleRegistry.get(FloatingRelicsModule.class).setEnabled(false);
@@ -79,7 +88,8 @@ final class FeaturePreview {
     private <T extends Setting>T setting(String id,Class<T> type){return type.cast(sky.settings().stream().filter(s->s.id().equals(id)).findFirst().orElseThrow());}
     void tick(Minecraft mc)throws Exception{
         if(stage==99)return;
-        if(stage>=30)mc.player.setXRot(-20);
+        if(stage>=39&&stage<50)mc.player.setXRot(20);
+        else if(stage>=30)mc.player.setXRot(-20);
         else if(stage>=20){mc.player.setXRot(10);mc.player.setYRot(0);}
         else if(stage<3||stage==7){mc.player.setXRot(stage==1||stage==2?-35:-80);mc.player.setYRot(stage==1||stage==2?180:0);}
         if(System.nanoTime()-began>600_000_000_000L){Files.writeString(Path.of("feature-preview-limited.txt"),"Browser did not finish within ten minutes\n"+String.join("\n",checks));stage=99;return;}
@@ -102,6 +112,16 @@ final class FeaturePreview {
             }
             case 21 -> {AtlasSmokeClient.captureBack(mc,"hand-glow.png");ModuleRegistry.get(ItemOutlineModule.class).setEnabled(false);stage++;}
             case 22 -> {AtlasSmokeClient.captureBack(mc,"hand-plain.png");Files.writeString(Path.of("hand-preview-ready.txt"),"done\n");stage=99;mc.stop();}
+            case 39 -> {AtlasSmokeClient.captureBack(mc,"knife-vanilla.png");ModuleRegistry.get(KnivesModule.class).setEnabled(true);stage++;}
+            case 40,41,42,43,44 -> {
+                String[] styles={"Tactical","Claw","Folding","Hunting","Dagger"};
+                var knives=ModuleRegistry.get(KnivesModule.class);
+                if(mc.player.getMainHandItem().isEmpty())mc.player.setItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND,new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.DIAMOND_SWORD));
+                if(stage>40)AtlasSmokeClient.captureBack(mc,"knife-"+styles[stage-41].toLowerCase()+".png");
+                knives.settings().stream().filter(x->x.id().equals("style")).findFirst().map(ModeSetting.class::cast).orElseThrow().set(styles[stage-40]);
+                stage++;
+            }
+            case 45 -> {AtlasSmokeClient.captureBack(mc,"knife-dagger.png");Files.writeString(Path.of("knife-preview-ready.txt"),"done\n");stage=99;mc.stop();}
             case 30 -> {AtlasSmokeClient.captureBack(mc,"gui-combat.png");guiState(mc,"BASE_RAID");stage++;}
             case 31 -> {AtlasSmokeClient.captureBack(mc,"gui-baseraid.png");ThemeStore.get().applyPreset(ThemeStore.PRESETS.stream().filter(p->p.name().equals("Halloween")).findFirst().orElseThrow());stage++;}
             case 32 -> {AtlasSmokeClient.captureBack(mc,"gui-halloween.png");Files.writeString(Path.of("gui-preview-ready.txt"),"done\n");stage=99;mc.stop();}

@@ -59,6 +59,7 @@ if (project.hasProperty('smokeTest') || project.hasProperty('builderTest') || pr
         if (project.hasProperty('featurePreview')) vmArg '-Dspectre.featurePreview=true'
         if (project.hasProperty('skyOnly')) vmArg '-Dspectre.skyOnly=true'
         if (project.hasProperty('handPreview')) vmArg '-Dspectre.handPreview=true'
+        if (project.hasProperty('knifePreview')) vmArg '-Dspectre.knifePreview=true'
         if (project.hasProperty('guiPreview')) vmArg '-Dspectre.guiPreview=true'
         if (project.hasProperty('builderInteractions')) vmArg '-Dspectre.builderInteractions=true'
         if (project.hasProperty('builderPlay')) vmArg '-Dspectre.builderPlay=true'

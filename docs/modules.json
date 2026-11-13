@@ -5073,6 +5073,125 @@
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/HitParticlesModule.java"
     },
     {
+      "id": "shockwaves",
+      "name": "Shockwaves",
+      "description": "Expanding rings of light when you hit or kill something and when you land from a fall.",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "On hit",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "On kill",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "On landing",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Players only",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Size",
+          "type": "Number",
+          "default": "2.5",
+          "range": "0.5 to 8.0"
+        },
+        {
+          "label": "Duration (s)",
+          "type": "Number",
+          "default": "0.7",
+          "range": "0.2 to 2.0"
+        },
+        {
+          "label": "Thickness",
+          "type": "Number",
+          "default": "3.0",
+          "range": "1.0 to 8.0"
+        },
+        {
+          "label": "Rings per wave",
+          "type": "Number",
+          "default": "2.0",
+          "range": "1.0 to 4.0"
+        },
+        {
+          "label": "Landing: min fall",
+          "type": "Number",
+          "default": "2.0",
+          "range": "0.5 to 10.0"
+        },
+        {
+          "label": "Color",
+          "type": "Mode",
+          "default": "Accent",
+          "options": [
+            "Accent",
+            "Custom",
+            "Rainbow"
+          ]
+        },
+        {
+          "label": "Custom color",
+          "type": "Color"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/ShockwavesModule.java"
+    },
+    {
+      "id": "knives",
+      "name": "Knives",
+      "description": "Shows any sword you hold as a knife. Five original designs and five finishes. Only you see it.",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Knife",
+          "type": "Mode",
+          "options": [
+            "Tactical"
+          ]
+        },
+        {
+          "label": "Finish",
+          "type": "Mode",
+          "default": "Steel",
+          "options": [
+            "Steel"
+          ]
+        },
+        {
+          "label": "Moving glint",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Show in third person",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Size",
+          "type": "Number",
+          "default": "1.0",
+          "range": "0.6 to 1.4"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/KnivesModule.java"
+    },
+    {
       "id": "target-esp",
       "name": "Target ESP",
       "description": "Draws an Egyptian mark on your combat target.",

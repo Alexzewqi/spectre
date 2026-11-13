@@ -95,6 +95,7 @@ import net.spectre.client.module.impl.render.HitParticlesModule;
 import net.spectre.client.module.impl.render.HoleEspModule;
 import net.spectre.client.module.impl.render.ItemEspModule;
 import net.spectre.client.module.impl.render.JumpCirclesModule;
+import net.spectre.client.module.impl.render.KnivesModule;
 import net.spectre.client.module.impl.render.LightEspModule;
 import net.spectre.client.module.impl.render.LowHealthWarningModule;
 import net.spectre.client.module.impl.render.MotionBlurModule;
@@ -105,6 +106,7 @@ import net.spectre.client.module.impl.render.SpectralHoodModule;
 import net.spectre.client.module.impl.render.PrimeChunkFinderModule;
 import net.spectre.client.module.impl.render.RelicParticlesModule;
 import net.spectre.client.module.impl.render.ShaderEspModule;
+import net.spectre.client.module.impl.render.ShockwavesModule;
 import net.spectre.client.module.impl.render.SoundEspModule;
 import net.spectre.client.module.impl.render.SpawnerNametagsModule;
 import net.spectre.client.module.impl.render.SpawnerNotifierModule;
@@ -233,6 +235,8 @@ public final class BuiltinModuleProvider implements ModuleProvider {
          new GlossyArmorModule(),
          new net.spectre.client.module.impl.render.CapesModule(),
          new HitParticlesModule(),
+         new ShockwavesModule(),
+         new KnivesModule(),
          new TargetEspModule(),
          new TotemSpiritModule(),
          new RelicParticlesModule(),
