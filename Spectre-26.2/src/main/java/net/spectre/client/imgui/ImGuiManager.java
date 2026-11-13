@@ -13,7 +13,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.BooleanSupplier;
 import net.spectre.client.config.ThemeStore;
 import net.spectre.client.gui.GuiPalette;
@@ -196,6 +198,14 @@ public final class ImGuiManager {
 
    public ImFont menuItemFont() {
       return this.menuItemFont;
+   }
+
+   /** The click GUI is drawn larger than the HUD and menus so its text reads at a glance. */
+   public static final float GUI_BOOST = 1.3F;
+
+   /** Scale for the click GUI and its fonts: the UI scale times {@link #GUI_BOOST}. */
+   public float guiScale() {
+      return this.uiScale * GUI_BOOST;
    }
 
    public float uiScale() {
@@ -421,12 +431,12 @@ public final class ImGuiManager {
 
       float s = this.uiScale;
       this.loadedSystemFont = ThemeStore.get().systemFont.get();
-      // GUI text: Segoe UI from Windows when available (read in place, never bundled), else Geist.
-      String regular = this.loadedSystemFont ? systemFont("segoeui.ttf") : null, semibold = this.loadedSystemFont ? systemFont("seguisb.ttf") : null;
-      this.moduleFont = loadGuiFont(io, regular, "/assets/spectre/fonts/geist-medium.ttf", 16.5F * s);
-      this.categoryFont = loadGuiFont(io, semibold, "/assets/spectre/fonts/geist-semibold.ttf", 17.0F * s);
-      this.titleFont = loadGuiFont(io, semibold, "/assets/spectre/fonts/geist-semibold.ttf", 23.0F * s);
-      this.smallFont = loadGuiFont(io, semibold, "/assets/spectre/fonts/geist-medium.ttf", 13.0F * s);
+      // GUI text: Arial from the system when installed (read in place, never bundled), then Segoe UI, else Geist.
+      String regular = this.loadedSystemFont ? firstFont("arial.ttf", "segoeui.ttf") : null, semibold = this.loadedSystemFont ? firstFont("arialbd.ttf", "Arial Bold.ttf", "seguisb.ttf") : null;
+      this.moduleFont = loadGuiFont(io, regular, "/assets/spectre/fonts/geist-medium.ttf", 16.5F * s * GUI_BOOST);
+      this.categoryFont = loadGuiFont(io, semibold, "/assets/spectre/fonts/geist-semibold.ttf", 17.0F * s * GUI_BOOST);
+      this.titleFont = loadGuiFont(io, semibold, "/assets/spectre/fonts/geist-semibold.ttf", 23.0F * s * GUI_BOOST);
+      this.smallFont = loadGuiFont(io, semibold, "/assets/spectre/fonts/geist-medium.ttf", 13.0F * s * GUI_BOOST);
       this.hudValueFont = loadFont(io, "/assets/spectre/fonts/geist-semibold.ttf", 18.0F * s, this.glyphRanges);
       this.hudTextFont = loadFont(io, "/assets/spectre/fonts/geist-semibold.ttf", 17.0F * s, this.glyphRanges);
       this.hudLabelFont = loadFont(io, "/assets/spectre/fonts/geist-medium.ttf", 14.0F * s, this.glyphRanges);
@@ -457,11 +467,29 @@ public final class ImGuiManager {
    private boolean loadedSystemFont;
 
    /** Path of an installed Windows font, or null when it is missing (other OSes, stripped installs). */
+   /** A font file from the operating system's own font folders (never bundled), or null when it is not installed. */
    private static String systemFont(String file) {
+      List<Path> folders = new ArrayList<>();
       String windows = System.getenv("WINDIR");
-      if (windows == null) return null;
-      Path path = Path.of(windows, "Fonts", file);
-      return Files.isRegularFile(path) ? path.toString() : null;
+      if (windows != null) folders.add(Path.of(windows, "Fonts"));
+      folders.add(Path.of("/System/Library/Fonts/Supplemental"));
+      folders.add(Path.of("/Library/Fonts"));
+      folders.add(Path.of("/usr/share/fonts/truetype/msttcorefonts"));
+      for (Path folder : folders) {
+         for (String name : new String[]{file, Character.toUpperCase(file.charAt(0)) + file.substring(1)}) {
+            Path path = folder.resolve(name);
+            if (Files.isRegularFile(path)) return path.toString();
+         }
+      }
+      return null;
+   }
+
+   private static String firstFont(String... files) {
+      for (String file : files) {
+         String path = systemFont(file);
+         if (path != null) return path;
+      }
+      return null;
    }
 
    private ImFont loadGuiFont(ImGuiIO io, String systemPath, String fallbackResource, float sizePixels) {

@@ -68,7 +68,7 @@ public final class ThemeStore {
    public final BooleanSetting uiSounds = new BooleanSetting("UI sounds", true);
    public final BooleanSetting hoverSounds = new BooleanSetting("Hover sounds", false);
    /** Uses the system's Segoe UI for the GUI when it is installed; the bundled Geist otherwise. */
-   public final BooleanSetting systemFont = new BooleanSetting("Segoe UI font", true);
+   public final BooleanSetting systemFont = new BooleanSetting("Arial font", true);
    public final Surface panels = new Surface("panels", "Panels", false, 0xFF182230, 0.92F, 0.45F);
    public final Surface cards = new Surface("cards", "Cards", true, 0xFF101823, 0.97F, 0.85F);
    public final Surface tabBar = new Surface("tabbar", "Tab bar", false, 0xFF101823, 0.97F, 0.5F);
