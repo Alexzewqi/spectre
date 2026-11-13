@@ -484,7 +484,6 @@ public final class ClickGuiRenderer {
          ImGui.setCursorPosY(ImGui.getCursorPosY() + SpectreWidgets.s(12F));
          generalStrip(w);
          ImGui.dummy(1, SpectreWidgets.s(6F));
-         if (w > SpectreWidgets.s(100F)) renderActiveList(w);
          applySmoothScroll("corz_nav", dt);
       }
       ImGui.endChild();
@@ -522,50 +521,6 @@ public final class ClickGuiRenderer {
       }
       ImGui.end();
       ImGui.popStyleVar(2);
-   }
-
-   /** "ACTIVE" list in the wide sidebar: enabled modules with an accent dot; click one to open its settings. */
-   private void renderActiveList(float w) {
-      List<ClientModule> on = ModuleRegistry.all().stream()
-         .filter(m -> m.isEnabled() && m.category() != ModuleCategory.CLIENT).toList();
-      if (on.isEmpty()) return;
-      ImGui.setCursorPos(SpectreWidgets.s(16F), ImGui.getCursorPosY() + SpectreWidgets.s(4F));
-      boolean pushed = pushFont(ImGuiManager.getInstance().smallFont());
-      ImGui.textDisabled("ACTIVE");
-      if (pushed) ImGui.popFont();
-      ImFont small = ImGuiManager.getInstance().smallFont();
-      ImDrawList dl = ImGui.getWindowDrawList();
-      float rowH = SpectreWidgets.s(20F), rw = w - SpectreWidgets.s(16F);
-      int shown = Math.min(on.size(), 10);
-      for (int i = 0; i < shown; i++) {
-         ClientModule m = on.get(i);
-         ImGui.setCursorPos(SpectreWidgets.s(8F), ImGui.getCursorPosY());
-         boolean clicked = ImGui.invisibleButton("##active_" + m.id(), rw, rowH);
-         boolean hovered = ImGui.isItemHovered();
-         float x0 = ImGui.getItemRectMinX(), y0 = ImGui.getItemRectMinY();
-         if (hovered) dl.addRectFilled(x0, y0, x0 + rw, y0 + rowH, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.05F)), SpectreWidgets.s(6F));
-         float dot = SpectreWidgets.s(3F), dy = y0 + rowH * 0.5F;
-         dl.addCircleFilled(x0 + SpectreWidgets.s(12F), dy, dot * 2.2F, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.18F)), 12);
-         dl.addCircleFilled(x0 + SpectreWidgets.s(12F), dy, dot, SpectreWidgets.c(accentAt(0F)), 12);
-         float tx = x0 + SpectreWidgets.s(24F);
-         SpectreWidgets.text(dl, small, tx, dy - SpectreWidgets.lineHeight(small) * 0.5F, hovered ? brightText(1) : mutedText(1),
-            SpectreWidgets.ellipsize(small, m.name(), x0 + rw - tx - SpectreWidgets.s(6F)));
-         if (clicked) {
-            switchTab(Tab.MODULES);
-            workspaceCategory = m.category();
-            globalSearch.set("");
-            selectedModule = m;
-            detailOpen = true;
-            scroll.remove("corz_grid");
-            GuiSounds.click();
-         }
-      }
-      if (on.size() > shown) {
-         ImGui.setCursorPos(SpectreWidgets.s(32F), ImGui.getCursorPosY() + SpectreWidgets.s(2F));
-         boolean p2 = pushFont(small);
-         ImGui.textDisabled("+" + (on.size() - shown) + " more");
-         if (p2) ImGui.popFont();
-      }
    }
 
    private static void railDivider(ImDrawList dl, float x, float y, float w) {

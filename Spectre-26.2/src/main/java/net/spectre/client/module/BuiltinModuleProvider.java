@@ -82,6 +82,7 @@ import net.spectre.client.module.impl.render.CustomCrosshairModule;
 import net.spectre.client.module.impl.render.CustomFovModule;
 import net.spectre.client.module.impl.render.CustomGlintModule;
 import net.spectre.client.module.impl.render.GlossyArmorModule;
+import net.spectre.client.module.impl.render.EchoFinderModule;
 import net.spectre.client.module.impl.render.EspModule;
 import net.spectre.client.module.impl.render.FloatingRelicsModule;
 import net.spectre.client.module.impl.render.FreelookModule;
@@ -102,6 +103,7 @@ import net.spectre.client.module.impl.render.SpectralHoodModule;
 import net.spectre.client.module.impl.render.PrimeChunkFinderModule;
 import net.spectre.client.module.impl.render.RelicParticlesModule;
 import net.spectre.client.module.impl.render.ShaderEspModule;
+import net.spectre.client.module.impl.render.SoundEspModule;
 import net.spectre.client.module.impl.render.SpawnerNametagsModule;
 import net.spectre.client.module.impl.render.SpawnerNotifierModule;
 import net.spectre.client.module.impl.render.StorageEspModule;
@@ -197,6 +199,8 @@ public final class BuiltinModuleProvider implements ModuleProvider {
          new SkinChangeModule(),
          new SpawnerNotifierModule(),
          new SusChunkFinderModule(),
+         new EchoFinderModule(),
+         new SoundEspModule(),
          new ChunkScannerModule(),
          new PrimeChunkFinderModule(),
          new BlockEntityDebugModule(),
