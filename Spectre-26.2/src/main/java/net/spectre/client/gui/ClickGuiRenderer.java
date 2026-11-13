@@ -630,13 +630,19 @@ public final class ClickGuiRenderer {
          }
          float gap = SpectreWidgets.s(10F), pad = SpectreWidgets.s(16F), r = SpectreWidgets.s(13F);
          int cols = w >= SpectreWidgets.s(620F) ? 3 : w >= SpectreWidgets.s(380F) ? 2 : 1;
-         float cardW = (w - gap * (cols - 1)) / cols, headH = SpectreWidgets.s(46F);
-         float swW = SpectreWidgets.s(40F), swH = SpectreWidgets.s(21F), wrapW = cardW - pad * 2;
+         float colW = (w - gap * (cols - 1)) / cols, headH = SpectreWidgets.s(46F);
+         float swW = SpectreWidgets.s(40F), swH = SpectreWidgets.s(21F);
          float[] columnY = new float[cols];
          ImFont nameFont = ImGuiManager.getInstance().categoryFont();
          ImFont small = ImGuiManager.getInstance().smallFont();
          int descColor = SpectreWidgets.c(mutedText(1));
          for (ClientModule module : modules) {
+            ImGui.pushID(module.id());
+            // The open card grows by the height its settings took last frame, easing in and out, and
+            // takes two columns so setting names and sliders have room.
+            float openT = easeOut(SpectreWidgets.animate(ImGui.getID("##open"), detailOpen && module == selectedModule, 12F));
+            int span = openT > 0.01F && cols >= 2 ? 2 : 1;
+            float cardW = colW * span + gap * (span - 1), wrapW = cardW - pad * 2;
             String description = module.description();
             boolean described = description != null && !description.isBlank();
             float descH = 0;
@@ -646,16 +652,21 @@ public final class ClickGuiRenderer {
                if (pushed) ImGui.popFont();
             }
             float baseH = described ? headH + descH + SpectreWidgets.s(14F) : headH + SpectreWidgets.s(4F);
-            ImGui.pushID(module.id());
-            // The open card grows by the height its settings took last frame, easing in and out.
-            float openT = easeOut(SpectreWidgets.animate(ImGui.getID("##open"), detailOpen && module == selectedModule, 12F));
             float bodyH = settingsHeight.getOrDefault(module.id(), SpectreWidgets.s(140F));
             float cardH = baseH + (openT > 0.01F ? (bodyH + SpectreWidgets.s(16F)) * openT : 0F);
-            // Each card goes into whichever column is shortest so far.
+            // Each card goes where the columns it needs are shortest so far.
             int col = 0;
-            for (int c = 1; c < cols; c++) if (columnY[c] < columnY[col] - 0.5F) col = c;
-            float lx = col * (cardW + gap), ly = columnY[col];
-            columnY[col] += cardH + gap;
+            float ly = Float.MAX_VALUE;
+            for (int c = 0; c + span <= cols; c++) {
+               float top = columnY[c];
+               for (int k = 1; k < span; k++) top = Math.max(top, columnY[c + k]);
+               if (top < ly - 0.5F) {
+                  ly = top;
+                  col = c;
+               }
+            }
+            float lx = col * (colW + gap);
+            for (int k = 0; k < span; k++) columnY[col + k] = ly + cardH + gap;
 
             ImGui.setCursorPos(lx, ly);
             boolean clicked = ImGui.invisibleButton("##card", cardW, baseH);
@@ -694,6 +705,7 @@ public final class ClickGuiRenderer {
             }
 
             dl.addRectFilled(cx, cy, cx + cardW, cy + cardH, tone(0.15F + 0.04F * hover, 1F), r);
+            if (onT > 0.01F) dl.addRectFilled(cx, cy, cx + cardW, cy + cardH, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.07F * onT)), r);
             dl.addRect(cx, cy, cx + cardW, cy + cardH, SpectreWidgets.c(SpectreWidgets.withAlpha(0xFFFFFFFF, 0.035F + 0.04F * hover)), r, 0, 1F);
             if (chosen) dl.addRect(cx, cy, cx + cardW, cy + cardH, SpectreWidgets.c(SpectreWidgets.withAlpha(accentAt(0F), 0.85F)), r, 0, SpectreWidgets.s(1.5F));
             String name = SpectreWidgets.ellipsize(nameFont, module.name(), swX - cx - pad - SpectreWidgets.s(10F));
@@ -3879,29 +3891,44 @@ public final class ClickGuiRenderer {
    }
 
    /** Draws the pending on/off settings as a grid of toggle buttons, then empties the list. Right-click resets one. */
+   /** A run of on/off settings as rows of name and small switch, two to a line when there is room. */
    private void renderToggleGrid(List<BooleanSetting> toggles, float pad, float contentW) {
       if (toggles.isEmpty()) return;
-      int columns = contentW >= SpectreWidgets.s(440F) ? 3 : 2;
-      float gap = SpectreWidgets.s(6F), chipH = SpectreWidgets.s(28F);
-      float chipW = (contentW - gap * (columns - 1)) / columns;
+      int columns = contentW >= SpectreWidgets.s(400F) ? 2 : 1;
+      float gap = SpectreWidgets.s(14F), rowH = SpectreWidgets.s(28F);
+      float cellW = (contentW - gap * (columns - 1)) / columns;
+      float swW = SpectreWidgets.s(30F), swH = SpectreWidgets.s(16F);
       float top = ImGui.getCursorPosY() + SpectreWidgets.s(4F);
       ImFont font = ImGui.getFont();
       for (int i = 0; i < toggles.size(); i++) {
          BooleanSetting bs = toggles.get(i);
-         float localX = pad + (i % columns) * (chipW + gap), localY = top + (i / columns) * (chipH + gap);
-         ImGui.setCursorPos(localX, localY);
+         ImGui.setCursorPos(pad + (i % columns) * (cellW + gap), top + (i / columns) * rowH);
          ImGui.pushID(bs.id());
          float sx = ImGui.getCursorScreenPosX(), sy = ImGui.getCursorScreenPosY();
-         if (SpectreWidgets.chipButton("##tg", SpectreWidgets.ellipsize(font, bs.name(), chipW - SpectreWidgets.s(18F)), chipW, chipH, bs.get())) bs.set(!bs.get());
-         if (ImGui.isItemHovered()) {
+         if (ImGui.invisibleButton("##tg", cellW, rowH)) {
+            bs.set(!bs.get());
+            GuiSounds.toggle(bs.get());
+         }
+         boolean hovered = ImGui.isItemHovered();
+         float hover = SpectreWidgets.animate(ImGui.getItemID(), hovered, 18F);
+         float onT = SpectreWidgets.animate(ImGui.getID("##tg_on"), bs.get(), 14F);
+         if (hovered) {
             showTooltip(bs.name() + (bs.isDefault() ? "" : "\nModified - right-click to reset"));
             if (ImGui.isMouseClicked(1)) bs.resetToDefault();
          }
-         if (!bs.isDefault()) ImGui.getWindowDrawList().addCircleFilled(sx + SpectreWidgets.s(7F), sy + chipH * 0.5F, SpectreWidgets.s(2.5F), SpectreWidgets.c(bs.get() ? -1 : GuiPalette.accent()), 10);
+         ImDrawList dl = ImGui.getWindowDrawList();
+         float textX = sx;
+         if (!bs.isDefault()) {
+            dl.addCircleFilled(sx + SpectreWidgets.s(3F), sy + rowH * 0.5F, SpectreWidgets.s(2.5F), SpectreWidgets.c(GuiPalette.accent()), 10);
+            textX += SpectreWidgets.s(10F);
+         }
+         SpectreWidgets.text(dl, font, textX, sy + (rowH - SpectreWidgets.lineHeight(font)) * 0.5F,
+            SpectreTheme.lerpColor(mutedText(1), brightText(1), Math.max(onT, hover * 0.6F)), SpectreWidgets.ellipsize(font, bs.name(), sx + cellW - swW - SpectreWidgets.s(8F) - textX));
+         SpectreWidgets.drawSwitch(dl, sx + cellW - swW, sy + (rowH - swH) * 0.5F, swW, swH, onT);
          ImGui.popID();
       }
       int rows = (toggles.size() + columns - 1) / columns;
-      ImGui.setCursorPos(0, top + rows * (chipH + gap) + SpectreWidgets.s(2F));
+      ImGui.setCursorPos(0, top + rows * rowH + SpectreWidgets.s(2F));
       toggles.clear();
       this.dividerPending = false;
    }
