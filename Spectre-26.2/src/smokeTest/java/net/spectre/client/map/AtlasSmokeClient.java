@@ -60,7 +60,7 @@ public final class AtlasSmokeClient implements ClientModInitializer {
         String module=switch(shot){case "combat"->"kill-aura";case "movement"->"fly";case "render"->"fullbright";case "client"->"hud";case "misc"->"auto-eat";case "donut"->"spawner-notifier";case "base-raid"->"quantum";case "base-builder","builder-workspace"->"builder";case "visuals"->"atmosphere";default->null;};
         if(category!=null)setField(renderer,"workspaceCategory",net.spectre.client.module.ModuleCategory.values().stream().filter(c->c.name().equals(category)).findFirst().orElse(null));
         var selected=module==null?null:net.spectre.client.module.ModuleRegistry.resolve(module);
-        setField(renderer,"selectedModule",selected);
+        setField(renderer,"selectedModule",selected);setField(renderer,"detailOpen",selected!=null);
         String tab=switch(shot){case "hud-editor"->"HUD";case "appearance"->"THEME";case "profiles"->"CONFIG";case "friends"->"FRIENDS";default->"MODULES";};
         var current=field(renderer,"tab");
         var switchTab=renderer.getClass().getDeclaredMethod("switchTab",current.getClass());switchTab.setAccessible(true);
