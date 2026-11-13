@@ -3185,6 +3185,58 @@
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/DeepScanModule.java"
     },
     {
+      "id": "shaft-finder",
+      "name": "Shaft Finder",
+      "description": "Finds player-dug shafts: one-block holes going straight down with solid walls, often with a ladder or water. Works from the surface because the upper part of a shaft is not hidden. Follow one down to reach a base.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Minimum depth",
+          "type": "Number",
+          "default": "10.0",
+          "range": "5.0 to 40.0"
+        },
+        {
+          "label": "Scan down to Y",
+          "type": "Number",
+          "default": "0.0",
+          "range": "-64.0 to 60.0"
+        },
+        {
+          "label": "Only with ladder, water or scaffolding",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Shaft color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk tracers",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Distance labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Save finds to file",
+          "type": "Boolean",
+          "default": "On"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/ShaftFinderModule.java"
+    },
+    {
       "id": "trail-finder",
       "name": "Trail Finder",
       "description": "Marks chunks someone has already loaded (green) apart from chunks generated just now (red), using how water and lava have flowed. Follow the green through the red to reach a base. Needs no underground blocks; useless on a fully pre-generated world.",
@@ -5147,6 +5199,167 @@
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/ShockwavesModule.java"
+    },
+    {
+      "id": "damage-numbers",
+      "name": "Damage Numbers",
+      "description": "Floating numbers over anything that takes damage or heals near you.",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Players only",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Show my own",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Show healing",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Range",
+          "type": "Number",
+          "default": "32.0",
+          "range": "8.0 to 96.0"
+        },
+        {
+          "label": "Size",
+          "type": "Number",
+          "default": "1.5",
+          "range": "0.75 to 3.0"
+        },
+        {
+          "label": "Duration (s)",
+          "type": "Number",
+          "default": "1.2",
+          "range": "0.4 to 3.0"
+        },
+        {
+          "label": "Damage color",
+          "type": "Color"
+        },
+        {
+          "label": "Big hit color",
+          "type": "Color"
+        },
+        {
+          "label": "Heal color",
+          "type": "Color"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/DamageNumbersModule.java"
+    },
+    {
+      "id": "trails",
+      "name": "Trails",
+      "description": "A fading ribbon of light behind you, and behind other players if you want.",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "My trail",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Other players",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Length (s)",
+          "type": "Number",
+          "default": "1.5",
+          "range": "0.3 to 6.0"
+        },
+        {
+          "label": "Width",
+          "type": "Number",
+          "default": "3.0",
+          "range": "1.0 to 8.0"
+        },
+        {
+          "label": "Height on body",
+          "type": "Number",
+          "default": "0.1",
+          "range": "0.0 to 1.8"
+        },
+        {
+          "label": "Color",
+          "type": "Mode",
+          "default": "Accent",
+          "options": [
+            "Accent"
+          ]
+        },
+        {
+          "label": "Custom color",
+          "type": "Color"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/TrailsModule.java"
+    },
+    {
+      "id": "china-hat",
+      "name": "China Hat",
+      "description": "A glowing cone hat over your head, and over other players if you want.",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "On other players",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Show in first person",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Radius",
+          "type": "Number",
+          "default": "0.6",
+          "range": "0.3 to 1.2"
+        },
+        {
+          "label": "Height",
+          "type": "Number",
+          "default": "0.3",
+          "range": "0.1 to 0.8"
+        },
+        {
+          "label": "Opacity",
+          "type": "Number",
+          "default": "0.45",
+          "range": "0.1 to 1.0"
+        },
+        {
+          "label": "Color",
+          "type": "Mode",
+          "default": "Accent",
+          "options": [
+            "Accent"
+          ]
+        },
+        {
+          "label": "Custom color",
+          "type": "Color"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/ChinaHatModule.java"
     },
     {
       "id": "knives",

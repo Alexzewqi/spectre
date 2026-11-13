@@ -93,7 +93,7 @@ public final class BaseRadarModule extends ClientModule {
    }
 
    private void startFinders() {
-      for (Class<? extends ClientModule> type : List.of(DeepScanModule.class, EchoFinderModule.class, SoundEspModule.class, SusChunkFinderModule.class, ChunkScannerModule.class,
+      for (Class<? extends ClientModule> type : List.of(DeepScanModule.class, ShaftFinderModule.class, EchoFinderModule.class, SoundEspModule.class, SusChunkFinderModule.class, ChunkScannerModule.class,
          PrimeChunkFinderModule.class, PlayerBypassModule.class)) {
          ClientModule module = ModuleRegistry.get(type);
          if (module != null && !module.isEnabled()) {
