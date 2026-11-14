@@ -57,7 +57,8 @@ public final class ShaftFinderModule extends ClientModule {
    private static final int MAX_SHAFTS = 2000;
    private final NumberSetting minDepth = this.addSetting("min-depth", new NumberSetting("Minimum depth", 10.0F, 5.0F, 40.0F).step(1.0F));
    private final NumberSetting floorY = this.addSetting("floor-y", new NumberSetting("Scan down to Y", 0.0F, -64.0F, 60.0F).step(1.0F));
-   private final BooleanSetting climbOnly = this.addSetting("climb-only", new BooleanSetting("Only with ladder, water or scaffolding", false));
+   private final BooleanSetting climbOnly = this.addSetting("climb-only", new BooleanSetting("Only with ladder, water or scaffolding", true));
+   private final BooleanSetting reachFloor = this.addSetting("reach-floor", new BooleanSetting("Only shafts that reach the hidden layer", true));
    private final ColorSetting shaftColor = this.addSetting("shaft-color", new ColorSetting("Shaft color", 0xFFFFE066));
    private final ColorSetting chunkColor = this.addSetting("chunk-color", new ColorSetting("Chunk color", 0x60FF8A3C));
    private final BooleanSetting chunkTracers = this.addSetting("chunk-tracers", new BooleanSetting("Chunk tracers", true));
@@ -74,11 +75,12 @@ public final class ShaftFinderModule extends ClientModule {
    private int total;
 
    public ShaftFinderModule() {
-      super("shaft-finder", "Shaft Finder", "Finds player-dug shafts: one-block holes going straight down with solid walls, often with a ladder or water. Works from the surface because the upper part of a shaft is not hidden. Follow one down to reach a base.", ModuleCategory.BASE_RAID);
+      super("shaft-finder", "Shaft Finder", "Finds shafts worth following: by default only one-block holes with a ladder, water or scaffolding that run all the way down into the hidden layer, so abandoned dig-downs are ignored. Works from the surface because the upper part of a shaft is not hidden. Follow one down to reach a base.", ModuleCategory.BASE_RAID);
       this.usesNotifications();
       this.minDepth.onChange(this::rescan);
       this.floorY.onChange(this::rescan);
       this.climbOnly.onChange(this::rescan);
+      this.reachFloor.onChange(this::rescan);
    }
 
    @Override
@@ -219,7 +221,9 @@ public final class ShaftFinderModule extends ClientModule {
                }
 
                if (!walled || y == floor) {
-                  if (run >= need && (climb || water || !this.climbOnly.get())) {
+                  // A shaft that stops short of the hidden layer is an abandoned dig; one that runs into it leads somewhere.
+                  boolean reaches = walled && y == floor;
+                  if (run >= need && (climb || water || !this.climbOnly.get()) && (reaches || !this.reachFloor.get())) {
                      out.add(new Shaft(x, z, runTop, runTop - run + 1, climb ? "Ladder shaft" : water ? "Water shaft" : "Dug shaft"));
                   }
 

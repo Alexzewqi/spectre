@@ -3187,7 +3187,7 @@
     {
       "id": "shaft-finder",
       "name": "Shaft Finder",
-      "description": "Finds player-dug shafts: one-block holes going straight down with solid walls, often with a ladder or water. Works from the surface because the upper part of a shaft is not hidden. Follow one down to reach a base.",
+      "description": "Finds shafts worth following: by default only one-block holes with a ladder, water or scaffolding that run all the way down into the hidden layer, so abandoned dig-downs are ignored. Works from the surface because the upper part of a shaft is not hidden. Follow one down to reach a base.",
       "category": "Base Raid",
       "action": false,
       "hold": false,
@@ -3208,7 +3208,12 @@
         {
           "label": "Only with ladder, water or scaffolding",
           "type": "Boolean",
-          "default": "Off"
+          "default": "On"
+        },
+        {
+          "label": "Only shafts that reach the hidden layer",
+          "type": "Boolean",
+          "default": "On"
         },
         {
           "label": "Shaft color",
