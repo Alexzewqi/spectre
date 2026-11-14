@@ -1302,6 +1302,12 @@
           "default": "Off"
         },
         {
+          "label": "Marker Y",
+          "type": "Number",
+          "default": "64.0",
+          "range": "-64.0 to 320.0"
+        },
+        {
           "label": "Sound",
           "type": "Boolean",
           "default": "On"
@@ -1408,6 +1414,12 @@
           "type": "Number",
           "default": "-1.0",
           "range": "-64.0 to 320.0"
+        },
+        {
+          "label": "Restore After (ticks)",
+          "type": "Number",
+          "default": "10.0",
+          "range": "2.0 to 60.0"
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/misc/RenderDistanceToggleModule.java"
@@ -1468,7 +1480,7 @@
     {
       "id": "quantum",
       "name": "Quantum",
-      "description": "Finds player activity in resent chunks.",
+      "description": "Flags block changes in chunks the server resends as player activity. Turn on Render Util to see the flagged area.",
       "category": "Base Raid",
       "action": false,
       "hold": false,
@@ -1498,7 +1510,7 @@
     {
       "id": "render-util",
       "name": "Render Util",
-      "description": "Renders the chunks flagged by Quantum.",
+      "description": "Draws the chunks Quantum flags. Cyan marks the chunk where activity was seen.",
       "category": "Base Raid",
       "action": false,
       "hold": false,
@@ -1521,6 +1533,16 @@
         {
           "label": "Line Color",
           "type": "Color"
+        },
+        {
+          "label": "Marker Y",
+          "type": "Number",
+          "default": "63.0",
+          "range": "-64.0 to 320.0"
+        },
+        {
+          "label": "Clear Marks",
+          "type": "Action"
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/misc/RenderUtilModule.java"
@@ -1593,6 +1615,16 @@
           "label": "Tracer",
           "type": "Boolean",
           "default": "Off"
+        },
+        {
+          "label": "Color",
+          "type": "Color"
+        },
+        {
+          "label": "Fill Opacity",
+          "type": "Number",
+          "default": "35.0",
+          "range": "0.0 to 100.0"
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/misc/AmethystBypassModule.java"
@@ -2938,14 +2970,23 @@
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/HandsModule.java"
     },
     {
-      "id": "hand-aura",
-      "name": "Hand Aura",
-      "description": "Adds a glowing outline to your hand and held item.",
+      "id": "item-outline",
+      "name": "Item Outline",
+      "description": "Outlines or glows the item in your hand.",
       "category": "Visuals",
       "action": false,
       "hold": false,
       "key": null,
       "settings": [
+        {
+          "label": "Style",
+          "type": "Mode",
+          "default": "Outline",
+          "options": [
+            "Outline",
+            "Glow"
+          ]
+        },
         {
           "label": "Color",
           "type": "Mode",
@@ -2956,17 +2997,35 @@
           ]
         },
         {
-          "label": "Glow Color",
+          "label": "Color Value",
           "type": "Color"
         },
         {
-          "label": "Aura",
+          "label": "Outline Width",
+          "type": "Number",
+          "default": "2.0",
+          "range": "1.0 to 6.0"
+        },
+        {
+          "label": "Outline Opacity",
+          "type": "Number",
+          "default": "100.0",
+          "range": "10.0 to 100.0"
+        },
+        {
+          "label": "Inside Tint",
+          "type": "Number",
+          "default": "15.0",
+          "range": "0.0 to 100.0"
+        },
+        {
+          "label": "Glow Strength",
           "type": "Number",
           "default": "65.0",
           "range": "0.0 to 100.0"
         },
         {
-          "label": "Reach",
+          "label": "Glow Reach",
           "type": "Number",
           "default": "8.0",
           "range": "2.0 to 20.0"
@@ -2984,26 +3043,36 @@
           "range": "0.0 to 100.0"
         },
         {
-          "label": "Sheen Color",
-          "type": "Color"
+          "label": "Breathe",
+          "type": "Boolean",
+          "default": "On"
         },
         {
-          "label": "Breathe",
+          "label": "Skip Empty Hand",
           "type": "Boolean",
           "default": "On"
         }
       ],
-      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/HandAuraModule.java"
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/ItemOutlineModule.java"
     },
     {
       "id": "skin-change",
       "name": "Skin Change",
-      "description": "Wear any player's skin client-side.",
+      "description": "Wear any player's skin client-side, or a random one.",
       "category": "Misc",
       "action": false,
       "hold": false,
       "key": null,
       "settings": [
+        {
+          "label": "Random Skin",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "New Random Skin",
+          "type": "Action"
+        },
         {
           "label": "Self Player",
           "type": "String",
@@ -3042,6 +3111,266 @@
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/SpawnerNotifierModule.java"
+    },
+    {
+      "id": "deep-scan",
+      "name": "Deep Scan",
+      "description": "Finds underground bases from above on servers that hide the underground. Adds up leaked chest, hopper, furnace and spawner data, block types a section lists but does not show, and zeroed sky light. Ignores trial chambers and ancient cities.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Evidence needed",
+          "type": "Number",
+          "default": "6.0",
+          "range": "1.0 to 40.0"
+        },
+        {
+          "label": "Only below Y",
+          "type": "Number",
+          "default": "0.0",
+          "range": "-64.0 to 320.0"
+        },
+        {
+          "label": "Leaked block entities",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Palette ghosts",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Zeroed sky light",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Ignore trial chambers and ancient cities",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Box the evidence blocks",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Evidence color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk tracers",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Distance labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Save finds to file",
+          "type": "Boolean",
+          "default": "On"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/DeepScanModule.java"
+    },
+    {
+      "id": "shaft-finder",
+      "name": "Shaft Finder",
+      "description": "Finds shafts worth following: by default only one-block holes with a ladder, water or scaffolding that run all the way down into the hidden layer, so abandoned dig-downs are ignored. Works from the surface because the upper part of a shaft is not hidden. Follow one down to reach a base.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Minimum depth",
+          "type": "Number",
+          "default": "10.0",
+          "range": "5.0 to 40.0"
+        },
+        {
+          "label": "Scan down to Y",
+          "type": "Number",
+          "default": "0.0",
+          "range": "-64.0 to 60.0"
+        },
+        {
+          "label": "Only with ladder, water or scaffolding",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Only shafts that reach the hidden layer",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Shaft color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk tracers",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Distance labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Save finds to file",
+          "type": "Boolean",
+          "default": "On"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/ShaftFinderModule.java"
+    },
+    {
+      "id": "trail-finder",
+      "name": "Trail Finder",
+      "description": "Marks chunks someone has already loaded (green) apart from chunks generated just now (red), using how water and lava have flowed. Follow the green through the red to reach a base. Needs no underground blocks; useless on a fully pre-generated world.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Show visited chunks",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Visited color",
+          "type": "Color"
+        },
+        {
+          "label": "Show fresh chunks",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Fresh color",
+          "type": "Color"
+        },
+        {
+          "label": "Marker Y",
+          "type": "Number",
+          "default": "63.0",
+          "range": "-64.0 to 320.0"
+        },
+        {
+          "label": "Draw radius (chunks)",
+          "type": "Number",
+          "default": "32.0",
+          "range": "4.0 to 96.0"
+        },
+        {
+          "label": "Alert when a trail starts",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Clear marks",
+          "type": "Action"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/TrailFinderModule.java"
+    },
+    {
+      "id": "base-radar",
+      "name": "Base Radar",
+      "description": "Combines every base finder into one ranked list. Sites that several methods agree on come first, a tracer points at the next one, and walking up to a site ticks it off.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Turn on all finders",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Order",
+          "type": "Mode",
+          "default": "Best first",
+          "options": [
+            "Best first",
+            "Nearest first"
+          ]
+        },
+        {
+          "label": "Methods that must agree",
+          "type": "Number",
+          "default": "1.0",
+          "range": "1.0 to 5.0"
+        },
+        {
+          "label": "Bases to find",
+          "type": "Number",
+          "default": "5.0",
+          "range": "1.0 to 20.0"
+        },
+        {
+          "label": "Checked when within",
+          "type": "Number",
+          "default": "20.0",
+          "range": "6.0 to 64.0"
+        },
+        {
+          "label": "List length",
+          "type": "Number",
+          "default": "5.0",
+          "range": "1.0 to 12.0"
+        },
+        {
+          "label": "Show list",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Tracer and beam to target",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Target color",
+          "type": "Color"
+        },
+        {
+          "label": "Turn on all finders now",
+          "type": "Action"
+        },
+        {
+          "label": "Copy target coordinates",
+          "type": "Action"
+        },
+        {
+          "label": "Skip current target",
+          "type": "Action"
+        },
+        {
+          "label": "Forget all sites",
+          "type": "Action"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/BaseRadarModule.java"
     },
     {
       "id": "sus-chunk-finder",
@@ -3122,6 +3451,30 @@
           "range": "1.0 to 20.0"
         },
         {
+          "label": "Show sus chunks",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Sus chunk color",
+          "type": "Color"
+        },
+        {
+          "label": "Sus chunk tracers",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Distance labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Save finds to file",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
           "label": "Object / inspect range",
           "type": "Number",
           "default": "128",
@@ -3134,6 +3487,135 @@
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/SusChunkFinderModule.java"
+    },
+    {
+      "id": "echo-finder",
+      "name": "Echo Finder",
+      "description": "Flags chunks where the server reports live activity you cannot see: chest lids, pistons, spawners, mining, block sounds, mob packs, placed entities and other players. Evidence adds up per chunk and fades over time. Works without the blocks being loaded; a hint, not proof of a base.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Evidence needed",
+          "type": "Number",
+          "default": "8.0",
+          "range": "2.0 to 40.0"
+        },
+        {
+          "label": "Evidence half-life (min)",
+          "type": "Number",
+          "default": "10.0",
+          "range": "1.0 to 60.0"
+        },
+        {
+          "label": "Keep flagged chunks",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Ignore within",
+          "type": "Number",
+          "default": "8.0",
+          "range": "0.0 to 32.0"
+        },
+        {
+          "label": "Underground only",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Underground below Y",
+          "type": "Number",
+          "default": "50.0",
+          "range": "-64.0 to 128.0"
+        },
+        {
+          "label": "Mob pack size",
+          "type": "Number",
+          "default": "6.0",
+          "range": "3.0 to 30.0"
+        },
+        {
+          "label": "Show activity points",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Point color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk color",
+          "type": "Color"
+        },
+        {
+          "label": "Chunk tracers",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Distance labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Save finds to file",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Clear evidence",
+          "type": "Action"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/EchoFinderModule.java"
+    },
+    {
+      "id": "sound-esp",
+      "name": "Sound ESP",
+      "description": "Marks where the server plays sounds, through walls. Chests, doors, pistons and block placing give away players you cannot see.",
+      "category": "Base Raid",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Mark lifetime (s)",
+          "type": "Number",
+          "default": "8.0",
+          "range": "1.0 to 60.0"
+        },
+        {
+          "label": "Range",
+          "type": "Number",
+          "default": "96.0",
+          "range": "8.0 to 256.0"
+        },
+        {
+          "label": "Ignore within",
+          "type": "Number",
+          "default": "3.0",
+          "range": "0.0 to 16.0"
+        },
+        {
+          "label": "Labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Tracers",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Chat alert for storage sounds",
+          "type": "Boolean",
+          "default": "On"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/SoundEspModule.java"
     },
     {
       "id": "chunk-scanner",
@@ -3179,6 +3661,16 @@
           "label": "Sound",
           "type": "Boolean",
           "default": "On"
+        },
+        {
+          "label": "Distance Labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Save Finds To File",
+          "type": "Boolean",
+          "default": "On"
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/ChunkScannerModule.java"
@@ -3203,6 +3695,16 @@
         },
         {
           "label": "Sound",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Distance Labels",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Save Finds To File",
           "type": "Boolean",
           "default": "On"
         }
@@ -3358,8 +3860,14 @@
             "Glow",
             "Box",
             "Fill",
-            "Both"
+            "Both",
+            "Corners"
           ]
+        },
+        {
+          "label": "Line Glow",
+          "type": "Boolean",
+          "default": "On"
         },
         {
           "label": "Range",
@@ -4399,6 +4907,20 @@
           "type": "Number",
           "default": "4.0",
           "range": "1.0 to 12.0"
+        },
+        {
+          "label": "Glow",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Hit Marker",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Hit Marker Color",
+          "type": "Color"
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/CustomCrosshairModule.java"
@@ -4454,6 +4976,75 @@
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/CustomGlintModule.java"
+    },
+    {
+      "id": "glossy-armor",
+      "name": "Glossy Armor",
+      "description": "Makes worn armour look polished and reflective with sweeping specular highlights.",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Shine Color",
+          "type": "Color"
+        },
+        {
+          "label": "Intensity",
+          "type": "Number",
+          "default": "0.85",
+          "range": "0.1 to 1.0"
+        },
+        {
+          "label": "Sharpness",
+          "type": "Number",
+          "default": "0.6",
+          "range": "0.1 to 1.0"
+        },
+        {
+          "label": "Base Sheen",
+          "type": "Number",
+          "default": "0.12",
+          "range": "0.0 to 0.5"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/GlossyArmorModule.java"
+    },
+    {
+      "id": "capes",
+      "name": "Capes",
+      "description": "Wear a Spectre cape (only you see it).",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Design",
+          "type": "Mode",
+          "default": "Spectre",
+          "options": [
+            "Spectre",
+            "Galaxy",
+            "Aurora",
+            "Ember",
+            "Ocean",
+            "Void",
+            "Custom"
+          ]
+        },
+        {
+          "label": "Cape Color",
+          "type": "Color"
+        },
+        {
+          "label": "On Elytra",
+          "type": "Boolean",
+          "default": "On"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/CapesModule.java"
     },
     {
       "id": "hit-particles",
@@ -4537,6 +5128,125 @@
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/HitParticlesModule.java"
+    },
+    {
+      "id": "shockwaves",
+      "name": "Shockwaves",
+      "description": "Expanding rings of light when you hit or kill something and when you land from a fall.",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "On hit",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "On kill",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "On landing",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Players only",
+          "type": "Boolean",
+          "default": "Off"
+        },
+        {
+          "label": "Size",
+          "type": "Number",
+          "default": "2.5",
+          "range": "0.5 to 8.0"
+        },
+        {
+          "label": "Duration (s)",
+          "type": "Number",
+          "default": "0.7",
+          "range": "0.2 to 2.0"
+        },
+        {
+          "label": "Thickness",
+          "type": "Number",
+          "default": "3.0",
+          "range": "1.0 to 8.0"
+        },
+        {
+          "label": "Rings per wave",
+          "type": "Number",
+          "default": "2.0",
+          "range": "1.0 to 4.0"
+        },
+        {
+          "label": "Landing: min fall",
+          "type": "Number",
+          "default": "2.0",
+          "range": "0.5 to 10.0"
+        },
+        {
+          "label": "Color",
+          "type": "Mode",
+          "default": "Accent",
+          "options": [
+            "Accent",
+            "Custom",
+            "Rainbow"
+          ]
+        },
+        {
+          "label": "Custom color",
+          "type": "Color"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/ShockwavesModule.java"
+    },
+    {
+      "id": "knives",
+      "name": "Knives",
+      "description": "Shows any sword you hold as a knife. Five original designs and five finishes. Only you see it.",
+      "category": "Visuals",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Knife",
+          "type": "Mode",
+          "options": [
+            "Tactical"
+          ]
+        },
+        {
+          "label": "Finish",
+          "type": "Mode",
+          "default": "Steel",
+          "options": [
+            "Steel"
+          ]
+        },
+        {
+          "label": "Moving glint",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Show in third person",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Size",
+          "type": "Number",
+          "default": "1.0",
+          "range": "0.6 to 1.4"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/render/KnivesModule.java"
     },
     {
       "id": "target-esp",
@@ -4916,6 +5626,23 @@
           "label": "UFO sightings",
           "type": "Boolean",
           "default": "On"
+        },
+        {
+          "label": "Saturn",
+          "type": "Boolean",
+          "default": "On"
+        },
+        {
+          "label": "Saturn size",
+          "type": "Number",
+          "default": "1",
+          "range": ".5 to 2.5"
+        },
+        {
+          "label": "Ring spin speed",
+          "type": "Number",
+          "default": "1",
+          "range": "0 to 4"
         },
         {
           "label": "Sky object density",
@@ -5542,8 +6269,9 @@
         {
           "label": "Toast Style",
           "type": "Mode",
-          "default": "Bar",
+          "default": "Notification",
           "options": [
+            "Notification",
             "Bar",
             "Card",
             "Chip"
@@ -6001,6 +6729,37 @@
         }
       ],
       "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/client/PerformanceModule.java"
+    },
+    {
+      "id": "theme-song",
+      "name": "Theme Song",
+      "description": "Plays Spectre's own synthwave theme on menus and in the Spectre GUI.",
+      "category": "Spectre Client",
+      "action": false,
+      "hold": false,
+      "key": null,
+      "settings": [
+        {
+          "label": "Play In",
+          "type": "Mode",
+          "options": [
+            "Menus"
+          ]
+        },
+        {
+          "label": "Volume",
+          "type": "Number",
+          "default": "0.45",
+          "range": "0.0 to 1.0"
+        },
+        {
+          "label": "Fade Seconds",
+          "type": "Number",
+          "default": "2.5",
+          "range": "0.2 to 8.0"
+        }
+      ],
+      "source": "Spectre-26.2/src/main/java/net/spectre/client/module/impl/client/ThemeSongModule.java"
     }
   ]
 }

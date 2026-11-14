@@ -36,6 +36,24 @@ public final class BaseFinds {
    private BaseFinds() {
    }
 
+   private static final Map<String, Report> LIVE = new java.util.LinkedHashMap<>();
+   private static final long REPORT_LIFE_NANOS = 2_000_000_000L;
+
+   private record Report(LongOpenHashSet chunks, long atNanos) {
+   }
+
+   /** A finder calls this each frame with the chunks it currently flags, so Base Radar can combine them. */
+   public static void publish(String module, LongSet chunks) {
+      LIVE.put(module, new Report(new LongOpenHashSet(chunks), System.nanoTime()));
+   }
+
+   /** Calls {@code sink} with each finder that reported within the last two seconds and its flagged chunks. */
+   public static void live(java.util.function.BiConsumer<String, LongSet> sink) {
+      long now = System.nanoTime();
+      LIVE.values().removeIf(report -> now - report.atNanos() > REPORT_LIFE_NANOS);
+      LIVE.forEach((module, report) -> sink.accept(module, report.chunks()));
+   }
+
    public static Path logFile() {
       return FabricLoader.getInstance().getGameDir().resolve("spectre").resolve("base-finds.txt");
    }

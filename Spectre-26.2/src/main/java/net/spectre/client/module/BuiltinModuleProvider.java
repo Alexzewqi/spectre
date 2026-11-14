@@ -73,6 +73,7 @@ import net.spectre.client.module.impl.movement.SpiderModule;
 import net.spectre.client.module.impl.movement.SprintModule;
 import net.spectre.client.module.impl.movement.TridentBoostModule;
 import net.spectre.client.module.impl.render.AtmosphereModule;
+import net.spectre.client.module.impl.render.BaseRadarModule;
 import net.spectre.client.module.impl.render.BlockEntityDebugModule;
 import net.spectre.client.module.impl.render.BlockEspModule;
 import net.spectre.client.module.impl.render.BlockOverlayModule;
@@ -82,6 +83,8 @@ import net.spectre.client.module.impl.render.CustomCrosshairModule;
 import net.spectre.client.module.impl.render.CustomFovModule;
 import net.spectre.client.module.impl.render.CustomGlintModule;
 import net.spectre.client.module.impl.render.GlossyArmorModule;
+import net.spectre.client.module.impl.render.DeepScanModule;
+import net.spectre.client.module.impl.render.EchoFinderModule;
 import net.spectre.client.module.impl.render.EspModule;
 import net.spectre.client.module.impl.render.FloatingRelicsModule;
 import net.spectre.client.module.impl.render.FreelookModule;
@@ -92,6 +95,7 @@ import net.spectre.client.module.impl.render.HitParticlesModule;
 import net.spectre.client.module.impl.render.HoleEspModule;
 import net.spectre.client.module.impl.render.ItemEspModule;
 import net.spectre.client.module.impl.render.JumpCirclesModule;
+import net.spectre.client.module.impl.render.KnivesModule;
 import net.spectre.client.module.impl.render.LightEspModule;
 import net.spectre.client.module.impl.render.LowHealthWarningModule;
 import net.spectre.client.module.impl.render.MotionBlurModule;
@@ -102,6 +106,9 @@ import net.spectre.client.module.impl.render.SpectralHoodModule;
 import net.spectre.client.module.impl.render.PrimeChunkFinderModule;
 import net.spectre.client.module.impl.render.RelicParticlesModule;
 import net.spectre.client.module.impl.render.ShaderEspModule;
+import net.spectre.client.module.impl.render.ShaftFinderModule;
+import net.spectre.client.module.impl.render.ShockwavesModule;
+import net.spectre.client.module.impl.render.SoundEspModule;
 import net.spectre.client.module.impl.render.SpawnerNametagsModule;
 import net.spectre.client.module.impl.render.SpawnerNotifierModule;
 import net.spectre.client.module.impl.render.StorageEspModule;
@@ -111,6 +118,7 @@ import net.spectre.client.module.impl.render.TargetEspModule;
 import net.spectre.client.module.impl.render.TimeChangerModule;
 import net.spectre.client.module.impl.render.TotemSpiritModule;
 import net.spectre.client.module.impl.render.TracersModule;
+import net.spectre.client.module.impl.render.TrailFinderModule;
 import net.spectre.client.module.impl.render.TrajectoriesModule;
 import net.spectre.client.module.impl.render.XrayModule;
 import net.spectre.client.module.impl.render.ZoomModule;
@@ -196,7 +204,13 @@ public final class BuiltinModuleProvider implements ModuleProvider {
          new ItemOutlineModule(),
          new SkinChangeModule(),
          new SpawnerNotifierModule(),
+         new DeepScanModule(),
+         new ShaftFinderModule(),
+         new TrailFinderModule(),
+         new BaseRadarModule(),
          new SusChunkFinderModule(),
+         new EchoFinderModule(),
+         new SoundEspModule(),
          new ChunkScannerModule(),
          new PrimeChunkFinderModule(),
          new BlockEntityDebugModule(),
@@ -223,6 +237,8 @@ public final class BuiltinModuleProvider implements ModuleProvider {
          new GlossyArmorModule(),
          new net.spectre.client.module.impl.render.CapesModule(),
          new HitParticlesModule(),
+         new ShockwavesModule(),
+         new KnivesModule(),
          new TargetEspModule(),
          new TotemSpiritModule(),
          new RelicParticlesModule(),

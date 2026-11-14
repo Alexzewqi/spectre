@@ -144,7 +144,7 @@ public class MenuFrame {
    }
 
    public ImFont listFont() {
-      return ImGuiManager.getInstance().moduleFont();
+      return ImGuiManager.getInstance().menuBodyFont();
    }
 
    public ImFont detailFont() {

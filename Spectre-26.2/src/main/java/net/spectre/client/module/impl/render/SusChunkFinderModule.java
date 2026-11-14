@@ -568,6 +568,7 @@ public final class SusChunkFinderModule extends ClientModule {
    public void onRender3D(Render3DEvent event) {
       var mc=Minecraft.getInstance();if(mc.level==null||mc.player==null)return;
       if (this.showChunks.get() && !this.visible.isEmpty()) {
+         net.spectre.client.util.BaseFinds.publish(this.name(), this.visible.keySet());
          net.spectre.client.util.ChunkOverlay.draw(this.visible.keySet(), this.chunkColor.argb(), event.partialTick);
          if (this.logFinds.get()) net.spectre.client.util.BaseFinds.track(this.visible.keySet(), this.name());
          if (this.chunkTracers.get()) {

@@ -19,7 +19,7 @@ public final class SpectreWidgets {
    }
 
    public static float s(float v) {
-      return v * ImGuiManager.getInstance().uiScale();
+      return v * ImGuiManager.getInstance().guiScale();
    }
 
    public static float animate(int key, boolean on, float speed) {

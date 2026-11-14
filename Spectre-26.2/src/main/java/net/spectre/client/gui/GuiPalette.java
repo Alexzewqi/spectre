@@ -27,9 +27,9 @@ public final class GuiPalette {
       ThemeStore theme = ThemeStore.get();
       accent = abgr(theme.accent.argbWithAlpha(255));
       accentHover = SpectreTheme.lerpColor(accent, -1, 0.2F);
-      surface = SpectreTheme.lerpColor(0xFF2B272E, accent, 0.10F);
-      surfaceHover = SpectreTheme.lerpColor(0xFF39343D, accent, 0.16F);
-      switchOff = SpectreTheme.lerpColor(0xFF4A4550, accent, 0.12F);
+      surface = SpectreTheme.lerpColor(0xFF2A2A2E, accent, 0.03F);
+      surfaceHover = SpectreTheme.lerpColor(0xFF38383D, accent, 0.06F);
+      switchOff = SpectreTheme.lerpColor(0xFF48484E, accent, 0.04F);
       panelBg = fill(theme.panels);
       cardBg = fill(theme.cards);
       tabBarBg = fill(theme.tabBar);
