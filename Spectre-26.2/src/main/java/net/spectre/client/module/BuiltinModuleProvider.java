@@ -108,9 +108,6 @@ import net.spectre.client.module.impl.render.RelicParticlesModule;
 import net.spectre.client.module.impl.render.ShaderEspModule;
 import net.spectre.client.module.impl.render.ShaftFinderModule;
 import net.spectre.client.module.impl.render.ShockwavesModule;
-import net.spectre.client.module.impl.render.ChinaHatModule;
-import net.spectre.client.module.impl.render.DamageNumbersModule;
-import net.spectre.client.module.impl.render.TrailsModule;
 import net.spectre.client.module.impl.render.SoundEspModule;
 import net.spectre.client.module.impl.render.SpawnerNametagsModule;
 import net.spectre.client.module.impl.render.SpawnerNotifierModule;
@@ -241,9 +238,6 @@ public final class BuiltinModuleProvider implements ModuleProvider {
          new net.spectre.client.module.impl.render.CapesModule(),
          new HitParticlesModule(),
          new ShockwavesModule(),
-         new DamageNumbersModule(),
-         new TrailsModule(),
-         new ChinaHatModule(),
          new KnivesModule(),
          new TargetEspModule(),
          new TotemSpiritModule(),
